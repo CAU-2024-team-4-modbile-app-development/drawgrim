@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:drawgrim/ChatPage.dart';
+import 'package:drawgrim/ChatPage.dart'; // ChatPage import 추가
 import 'package:drawgrim/RegisterPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
@@ -9,7 +9,6 @@ class Loginpage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Login'),
@@ -27,7 +26,7 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  bool saving=false;
+  bool saving = false;
   final _authentication = FirebaseAuth.instance;
   final _formKey = GlobalKey<FormState>();
   String email = '';
@@ -63,27 +62,35 @@ class _LoginFormState extends State<LoginForm> {
                 height: 20,
               ),
               ElevatedButton(
-                  onPressed: () async{
-                    try{
+                  onPressed: () async {
+                    try {
                       setState(() {
                         saving = true;
                       });
-                      final currentUser =
-                      await _authentication.signInWithEmailAndPassword(
-                          email: email, password: password);
-      
-                      if(currentUser.user!=null){
+                      // Firebase 로그인 시도
+                      final currentUser = await _authentication
+                          .signInWithEmailAndPassword(email: email, password: password);
+
+                      if (currentUser.user != null) {
                         _formKey.currentState!.reset();
-                        if(!mounted) return;
+                        setState(() {
+                          saving = false;
+                        });
+
+                        // 로그인 성공 시 ChatPage로 이동
+                        if (!mounted) return;
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ChatPage()));  // ChatPage로 이동
                       }
+                    } catch (e) {
                       setState(() {
                         saving = false;
                       });
-      
-                    }catch(e){
                       print(e);
+                      // 예외 처리: 오류 메시지 또는 알림 표시
                     }
-      
                   },
                   child: Text('Enter')),
               Row(
