@@ -1,3 +1,4 @@
+import 'package:drawgrim/GameRoom.dart';
 import 'package:flutter/material.dart';
 import 'package:drawgrim/ChatPage.dart'; // ChatPage import 추가
 import 'package:drawgrim/RegisterPage.dart';
@@ -82,7 +83,7 @@ class _LoginFormState extends State<LoginForm> {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ChatPage()));  // ChatPage로 이동
+                                builder: (context) => GameRoom()));  // ChatPage로 이동
                       }
                     } catch (e) {
                       setState(() {
