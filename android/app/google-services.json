@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937575586734",
+    "project_id": "finalproject-2ecd8",
+    "storage_bucket": "finalproject-2ecd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937575586734:android:4eb020878cb0229bf0c63f",
+        "android_client_info": {
+          "package_name": "com.example.drawgrim"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPcLHsC6tAFWRKS7Dvrql5eZwkxf8sVC8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
