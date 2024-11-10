@@ -231,17 +231,50 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  /// 绘制控制器
-  final DrawingController _drawingController = DrawingController();
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
 
+  /// 绘制控制器
+
+  final DrawingController _drawingController = DrawingController();
+  final String promptWord = "애 호 박";
+  late AnimationController _timerController;
   final TransformationController _transformationController =
   TransformationController();
+  Color timeColor = Colors.green;
+  final double first_timeWidth = 300.0;
+  double timeWidth = 300.0;
+  bool isTimeLow = false;
 
   double _colorOpacity = 1;
 
   @override
+  void initState() {
+    super.initState();
+    _timerController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 10), // Set the desired countdown time
+    )
+      ..addListener(() {
+        setState(() {
+          // Update time bar color and width based on remaining time
+          double progress = _timerController.value;
+          timeColor = Color.lerp(Colors.green, Colors.red, progress)!;
+          timeWidth = 300 * (1 - progress);
+
+          // Trigger shake effect when time is low
+          if (progress > 0.8) {
+            isTimeLow = true;
+          }
+        });
+      });
+
+    // Start the timer when the game starts
+    _timerController.forward();
+  }
+
+  @override
   void dispose() {
+    _timerController.dispose();
     _drawingController.dispose();
     super.dispose();
   }
@@ -269,7 +302,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /// 获取画板内容 Json `getJsonList()`
   Future<void> _getJson() async {
     jsonEncode(_drawingController.getJsonList());
 
@@ -297,6 +329,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  /// 获取画板内容 Json `getJsonList()`
+
   /// 添加Json测试内容
   void _addTestLine() {
     _drawingController.addContent(StraightLine.fromJson(_testLine1));
@@ -318,8 +352,9 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         leading: PopupMenuButton<Color>(
           icon: const Icon(Icons.color_lens),
-          onSelected: (ui.Color value) => _drawingController.setStyle(
-              color: value.withOpacity(_colorOpacity)),
+          onSelected: (ui.Color value) =>
+              _drawingController.setStyle(
+                  color: value.withOpacity(_colorOpacity)),
           itemBuilder: (_) {
             return <PopupMenuEntry<ui.Color>>[
               PopupMenuItem<Color>(
@@ -333,6 +368,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         _drawingController.setStyle(
                           color: _drawingController.drawConfig.value.color
                               .withOpacity(_colorOpacity),
+
                         );
                       },
                     );
@@ -349,25 +385,31 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         title: const Text('Drawing Test'),
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        actions: <Widget>[
-          IconButton(
-              icon: const Icon(Icons.line_axis), onPressed: _addTestLine),
-          IconButton(
-              icon: const Icon(Icons.javascript_outlined), onPressed: _getJson),
-          IconButton(icon: const Icon(Icons.check), onPressed: _getImageData),
-          IconButton(
-              icon: const Icon(Icons.restore_page_rounded),
-              onPressed: _restBoard),
-        ],
+
       ),
       body: Column(
         children: <Widget>[
+          // Prompt Word
+          SizedBox(height: 20),
+          Text(
+            promptWord,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          Transform.translate(
+            offset: isTimeLow ? Offset(5 *(0.5 - _timerController.value),0) : Offset(0, 0),
+            child: Container(
+              width: MediaQuery.of(context).size.width * (timeWidth/first_timeWidth),
+              height: 10,
+              color: timeColor,
+            ),
+          ),
+          SizedBox(height: 20),
           Expanded(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 return DrawingBoard(
-                  // boardPanEnabled: false,
-                  // boardScaleEnabled: false,
+                  boardPanEnabled: false,
+                  boardScaleEnabled: false,
                   transformationController: _transformationController,
                   controller: _drawingController,
                   background: Container(
@@ -376,58 +418,18 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.white,
                   ),
                   showDefaultActions: true,
-                  showDefaultTools: true,
-                  defaultToolsBuilder: (Type t, _) {
-                    return DrawingBoard.defaultTools(t, _drawingController)
-                      ..insert(
-                        1,
-                        DefToolItem(
-                          icon: Icons.change_history_rounded,
-                          isActive: t == Triangle,
-                          onTap: () =>
-                              _drawingController.setPaintContent(Triangle()),
-                        ),
-                      )
-                      ..insert(
-                        2,
-                        DefToolItem(
-                          icon: Icons.image_rounded,
-                          isActive: t == ImageContent,
-                          onTap: () async {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (BuildContext c) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              },
-                            );
+                  showDefaultTools: true
+                  ,
 
-                            try {
-                              _drawingController.setPaintContent(ImageContent(
-                                await _getImage(_imageUrl),
-                                imageUrl: _imageUrl,
-                              ));
-                            } catch (e) {
-                              //
-                            } finally {
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            }
-                          },
-                        ),
-                      );
-                  },
                 );
               },
             ),
           ),
+
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: SelectableText(
-              'https://github.com/fluttercandies/flutter_drawing_board',
+              ' ',
               style: TextStyle(fontSize: 10, color: Colors.white),
             ),
           ),
