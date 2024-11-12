@@ -37,56 +37,91 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat'),
-        actions: [
-          IconButton(
-              onPressed: () {
-                FirebaseAuth.instance.signOut();
-              },
-              icon: Icon(Icons.logout))
-        ],
+        // actions: [
+        //   IconButton(
+        //       onPressed: () {
+        //         FirebaseAuth.instance.signOut();
+        //       },
+        //       icon: Icon(Icons.logout))
+        // ], // ChatPage에서 logOut 삭제함
       ),
-      body: Column(
-        children: [
-          // 채팅 메시지 스트림
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('gameRooms')
-                  .doc(widget.roomId)
-                  .collection('messages')
-                  .orderBy('timestamp')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                final docs = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    return ChatElement(
-                      isMe: docs[index]['uid'] == _authentication.currentUser!.uid,
-                      userName: docs[index]['userName'],
-                      text: docs[index]['text'],
-                    );
-                  },
-                );
-              },
+      body: Center(
+        child: Stack(
+          children: [
+            // 채팅창 Container
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.black,
+                        width: 1.0
+                      )
+                    ),
+
+                    width: 500,
+                    height: 500,
+                    child: Column(
+                      children: [
+                        // 채팅 메시지 스트림
+                        Expanded(
+                          child: StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('gameRooms')
+                                .doc(widget.roomId)
+                                .collection('messages')
+                                .orderBy('timestamp')
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Center(child: CircularProgressIndicator());
+                              }
+                              final docs = snapshot.data!.docs;
+                              return ListView.builder(
+                                itemCount: docs.length,
+                                itemBuilder: (context, index) {
+                                  return ChatElement(
+                                    isMe: docs[index]['uid'] == _authentication.currentUser!.uid,
+                                    userName: docs[index]['userName'],
+                                    text: docs[index]['text'],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        // 메시지 입력 필드
+                        NewMessage(
+                          onSendMessage: sendMessage,
+                          messageController: _messageController,
+                          newMessage: newMessage,
+                          onChanged: (value) {
+                            setState(() {
+                              newMessage = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          // 메시지 입력 필드
-          NewMessage(
-            onSendMessage: sendMessage,
-            messageController: _messageController,
-            newMessage: newMessage,
-            onChanged: (value) {
-              setState(() {
-                newMessage = value;
-              });
-            },
-          )
-        ],
+            // 이모티콘들: 채팅방을 둘러싸도록 배치
+            Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
+            Align(alignment: Alignment.topLeft, child: Icon(Icons.face_2, size: 50)),
+            Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
+            Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
+
+
+          ],
+        ),
       ),
+
     );
   }
 
@@ -167,6 +202,7 @@ class ChatElement extends StatelessWidget {
                   text,
                   style: TextStyle(color: Colors.white),
                 ),
+                // Text("GOOD!!!") 디버깅용 문장
               ],
             ),
           ),
