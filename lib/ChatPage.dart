@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
+import 'SelectOrder.dart';
 
 class ChatPage extends StatefulWidget {
   final String roomId; // 채팅방 ID
@@ -49,6 +50,10 @@ class _ChatPageState extends State<ChatPage> {
               ),
               child: ElevatedButton(
                   onPressed: (){
+                    Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => Selectorder())
+                    );
+
 
                   },
                   child: Text("게임 시작", style: TextStyle(fontSize: 20),),
