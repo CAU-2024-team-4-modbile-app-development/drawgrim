@@ -41,6 +41,7 @@ dependencies:
   cloud_firestore: ^5.4.5
   flutter_chat_bubble: ^2.0.2
   flutter_drawing_board: ^0.9.5
+  google_fonts: ^4.0.4
 
 dev_dependencies:
   flutter_test:
