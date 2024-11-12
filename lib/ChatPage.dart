@@ -36,14 +36,27 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat'),
-        // actions: [
-        //   IconButton(
-        //       onPressed: () {
-        //         FirebaseAuth.instance.signOut();
-        //       },
-        //       icon: Icon(Icons.logout))
-        // ], // ChatPage에서 logOut 삭제함
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color: Colors.black,
+                    width: 1.0
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ElevatedButton(
+                  onPressed: (){
+
+                  },
+                  child: Text("게임 시작", style: TextStyle(fontSize: 20),),
+              ),
+            )
+          ],
+        ),
+
       ),
       body: Center(
         child: Stack(
@@ -116,10 +129,22 @@ class _ChatPageState extends State<ChatPage> {
             ),
             // 이모티콘들: 채팅방을 둘러싸도록 배치
 
-            Align(alignment: Alignment.topLeft, child: Icon(Icons.face, size: 50)),
-            Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
-            Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
-            Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(alignment: Alignment.topLeft, child: Icon(Icons.face, size: 50)),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
+            ),
           ],
         ),
       ),
