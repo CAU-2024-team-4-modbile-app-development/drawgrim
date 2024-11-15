@@ -16,40 +16,20 @@ class _GameRoomState extends State<GameRoom> {
   final _authentication = FirebaseAuth.instance;
   bool loading = false;
 
-  // 방 이름을 저장할 변수
   String roomName = '';
-  // 텍스트 입력 컨트롤러
   final TextEditingController _roomNameController = TextEditingController();
 
-  // 방 목록을 저장할 리스트
-  List<DocumentSnapshot> rooms = [];
-
-  // 방 목록을 불러오는 메서드
-  void getRooms() async {
-    setState(() {
-      loading = true;
-    });
-
+  // 로그아웃 메서드
+  void logOut() async {
     try {
-      // Firebase Firestore에서 방 목록을 가져옴
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('gameRooms')
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      setState(() {
-        rooms = querySnapshot.docs;
-        loading = false;
-      });
+      await FirebaseAuth.instance.signOut();
+      Navigator.pop(context);
     } catch (e) {
-      print("Error fetching rooms: $e");
-      setState(() {
-        loading = false;
-      });
+      print("Error logging out: $e");
     }
   }
 
-  // 방을 생성하는 메서드
+// 방을 생성하는 메서드
   void createRoom() async {
     if (roomName.isNotEmpty) {
       setState(() {
@@ -58,17 +38,27 @@ class _GameRoomState extends State<GameRoom> {
 
       try {
         // Firebase Firestore에 방 생성
-        await _firestore.collection('gameRooms').add({
+        var docRef = await _firestore.collection('gameRooms').add({
           'roomName': roomName,
           'createdBy': _authentication.currentUser?.email,
           'createdAt': Timestamp.now(),
-          'players': [ // 방에 참여할 플레이어 리스트 초기화
-            _authentication.currentUser?.email,
+          'players': [
+            _authentication.currentUser?.email, // 방 생성자 추가
           ],
         });
 
-        // 방 생성 후 방 목록을 새로 불러옴
-        getRooms();
+        // 방이 생성되면 생성자의 이메일을 players 목록에 추가
+        await docRef.update({
+          'players': FieldValue.arrayUnion([_authentication.currentUser?.email]),
+        });
+
+        // 방 이름 초기화
+        _roomNameController.clear();
+        roomName = '';
+
+        // 이후 방에 참가하도록 변경할 수도 있습니다. (선택사항)
+        joinRoom(docRef.id);
+
       } catch (e) {
         print("Error creating room: $e");
       } finally {
@@ -100,7 +90,7 @@ class _GameRoomState extends State<GameRoom> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ChatPage(roomId: roomId), // 방 ID를 넘겨줌
+          builder: (context) => ChatPage(roomId: roomId),
         ),
       );
     } catch (e) {
@@ -112,25 +102,22 @@ class _GameRoomState extends State<GameRoom> {
     }
   }
 
-  // 로그아웃 메서드
-  void logOut() async {
+  // 유저 수가 0인 방 삭제 메서드
+  void deleteEmptyRoom(String roomId) async {
     try {
-      // FirebaseAuth를 사용하여 로그아웃 처리
-      await FirebaseAuth.instance.signOut();
-
-      // 로그아웃 후 이전 화면으로 돌아가기
-      Navigator.pop(context);  // 이전 페이지로 돌아가기
+      // Firestore에서 해당 방을 조회
+      var roomSnapshot = await _firestore.collection('gameRooms').doc(roomId).get();
+      if (roomSnapshot.exists) {
+        List<dynamic> players = roomSnapshot['players'] ?? [];
+        if (players.isEmpty) {
+          // 유저가 없으면 해당 방을 삭제
+          await _firestore.collection('gameRooms').doc(roomId).delete();
+        }
+      }
     } catch (e) {
-      print("Error logging out: $e");
+      print("Error deleting empty room: $e");
     }
   }
-
-  @override
-  void initState() {
-    super.initState();
-    getRooms();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,7 +127,6 @@ class _GameRoomState extends State<GameRoom> {
           children: [
             Row(
               children: [
-                // 왼쪽에 방 목록을 표시할 영역
                 Expanded(
                   flex: 2,
                   child: Padding(
@@ -158,40 +144,62 @@ class _GameRoomState extends State<GameRoom> {
                           ),
                         ),
                         SizedBox(height: 3),
-                        // 방 목록을 표시하는 ListView
+                        // 방 목록을 표시하는 ListView (Firestore 스트림 구독)
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: rooms.length,
-                            itemBuilder: (context, index) {
-                              var room = rooms[index];
-                              List<dynamic> players = room['players'] ?? [];
-                              int playerCount = players.length;
+                          child: StreamBuilder<QuerySnapshot>(
+                            stream: _firestore
+                                .collection('gameRooms')
+                                .orderBy('createdAt', descending: true)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return Center(child: CircularProgressIndicator());
+                              }
 
-                              return Card(
-                                margin: EdgeInsets.symmetric(vertical: 8.0),
-                                elevation: 4.0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                child: ListTile(
-                                  contentPadding: EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
-                                  title: Text(
-                                    room['roomName'],
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('$playerCount/5', style: TextStyle(fontSize: 16)),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.person, size: 20),
-                                  ],
-                                ),
-                                  onTap: () {
-                                    // 방에 참가하는 로직
-                                    joinRoom(room.id);
-                                  },
-                                ),
+                              final rooms = snapshot.data!.docs;
+
+                              // 각 방을 순차적으로 확인하여 유저 수가 0인 방은 삭제
+                              for (var room in rooms) {
+                                List<dynamic> players = room['players'] ?? [];
+                                if (players.isEmpty) {
+                                  deleteEmptyRoom(room.id);
+                                }
+                              }
+
+                              return ListView.builder(
+                                itemCount: rooms.length,
+                                itemBuilder: (context, index) {
+                                  var room = rooms[index];
+                                  List<dynamic> players = room['players'] ?? [];
+                                  int playerCount = players.length;
+
+                                  return Card(
+                                    margin: EdgeInsets.symmetric(vertical: 8.0),
+                                    elevation: 4.0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                    child: ListTile(
+                                      contentPadding:
+                                      EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
+                                      title: Text(
+                                        room['roomName'],
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('$playerCount/5', style: TextStyle(fontSize: 16)),
+                                          SizedBox(width: 8),
+                                          Icon(Icons.person, size: 20),
+                                        ],
+                                      ),
+                                      onTap: () {
+                                        joinRoom(room.id);
+                                      },
+                                    ),
+                                  );
+                                },
                               );
                             },
                           ),
@@ -200,7 +208,6 @@ class _GameRoomState extends State<GameRoom> {
                     ),
                   ),
                 ),
-                // 오른쪽에 방 만들기와 방 조회 버튼
                 Expanded(
                   flex: 1,
                   child: Padding(
@@ -208,7 +215,6 @@ class _GameRoomState extends State<GameRoom> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 방 이름 입력
                         TextField(
                           controller: _roomNameController,
                           decoration: InputDecoration(
@@ -222,16 +228,9 @@ class _GameRoomState extends State<GameRoom> {
                           },
                         ),
                         SizedBox(height: 20),
-                        // 방 만들기 버튼
                         ElevatedButton(
                           onPressed: createRoom,
                           child: Text('Create Room'),
-                        ),
-                        SizedBox(height: 20),
-                        // 방 조회 버튼
-                        ElevatedButton(
-                          onPressed: getRooms,
-                          child: Text('Refresh Rooms'),
                         ),
                       ],
                     ),
@@ -239,13 +238,12 @@ class _GameRoomState extends State<GameRoom> {
                 ),
               ],
             ),
-            // 오른쪽 상단에 로그아웃 버튼 추가
             Positioned(
               top: 16,
               right: 16,
               child: IconButton(
                 icon: Icon(Icons.logout, size: 30, color: Colors.red),
-                onPressed: logOut,  // 로그아웃 후 이전 화면으로 돌아가기
+                onPressed: logOut,
               ),
             ),
           ],

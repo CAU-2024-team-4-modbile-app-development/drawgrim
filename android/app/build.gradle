@@ -50,5 +50,8 @@ flutter {
 dependencies {
     // Correct placement of the dependencies block
     implementation 'androidx.multidex:multidex:2.0.1'  // Updated to the AndroidX version
-    // Add other dependencies here
+
+    implementation platform('com.google.firebase:firebase-bom:30.0.0') // Ensure this is the latest
+    implementation 'com.google.firebase:firebase-storage'
+
 }

@@ -3,7 +3,6 @@ import 'drawing_board_module_test.dart'; // Assuming this is the page for drawin
 import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
 
 class Selectorder extends StatefulWidget {
-
   const Selectorder({super.key});
 
   @override
@@ -19,20 +18,22 @@ class _SelectorderState extends State<Selectorder> {
     super.initState();
 
     // Decide the number of total users and drawers
-    int totalUsers = 5;  // Assume there are 5 users
-    int numDrawers = 1;  // Start with at least 1 drawer
+    int totalUsers = 4;  // There are 4 users in total
+    int numDrawers = 1;  // One drawer and the rest are viewers
 
-    // Initialize the roles list with the first user as the drawer
+    // Initialize the roles list where one user is always a drawer (true)
     roles = List.generate(totalUsers, (index) {
-      // Ensure the first user is always a drawer
-      if (index == 0) return true;
-
-      // Randomly assign the remaining users as drawers or viewers
-      return index < numDrawers + 1 ? true : false; // Adjust numDrawers for additional drawers
+      return false; // Start with all viewers (false)
     });
 
-    // Shuffle the roles list (but keep the first item as drawer)
-    roles.shuffle();
+    // Randomly select one user to be the drawer
+    roles[0] = true; // First user is always the drawer for consistency
+    // Randomly pick one index to be the drawer
+    int drawerIndex = 0;
+    if (drawerIndex != 0) {  // Ensure it's not always the first one
+      drawerIndex = (roles.indexOf(false)); // Get the index of a viewer
+    }
+    roles[drawerIndex] = true; // Assign a drawer
 
     // After 5 seconds, hide the message and start the game
     Future.delayed(const Duration(seconds: 5), () {
@@ -154,7 +155,6 @@ class _SelectorderState extends State<Selectorder> {
           ],
         ),
       ),
-
     );
   }
 }
