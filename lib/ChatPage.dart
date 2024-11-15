@@ -14,6 +14,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
   final _messageController = TextEditingController();
@@ -23,6 +24,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     getCurrentUser();
+    updatePresence(true);
   }
 
   // 현재 로그인한 사용자 정보 가져오기
@@ -33,22 +35,91 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // 유저의 로그인 상태를 update
+  void updatePresence(bool isOnline) async {
+    if (loggedUser != null) {
+      final docRef = FirebaseFirestore.instance
+          .collection('gameRooms')
+          .doc(widget.roomId)
+          .collection('onlineUsers')
+          .doc(loggedUser!.uid);
+
+      if (isOnline) {
+        await docRef.set({
+          'username': loggedUser!.displayName ?? 'Anonymous',
+          'isOnline': true,
+        });
+      } else {
+        await docRef.delete();
+      }
+    }
+  }
+
+  Stream<int> getNumUsers() {   // 현재 게임룸의 플레이어수를 실시간으로 get
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('onlineUsers')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+
+  Widget userCountWidget() {
+    return StreamBuilder<int>(
+      stream: getNumUsers(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Text('유저 수: 0');
+        }
+        return Text('유저 수: ${snapshot.data}');
+      },
+    );
+  }
+
+  void removePlayerFromGameRoom(String roomId) async {
+    try {
+
+      await FirebaseFirestore.instance.collection('gameRooms').doc(roomId).update({
+        'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
+      });
+
+
+    } catch (e) {
+      print("Error removing player from room: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    updatePresence(false); // 플레이어 오프라인 전환
+    super.dispose();
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.black,
-                    width: 1.0
+    return PopScope(
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop){  //채팅방에서 뒤로가기 누르면 게임룸에서 제거
+          removePlayerFromGameRoom(widget.roomId);
+          return;
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: Colors.black,
+                      width: 1.0
+                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ElevatedButton(
+                child: ElevatedButton(
                   onPressed: (){
                     Navigator.push(context, MaterialPageRoute(
                         builder: (context) => Selectorder())
@@ -57,17 +128,64 @@ class _ChatPageState extends State<ChatPage> {
 
                   },
                   child: Text("게임 시작", style: TextStyle(fontSize: 20),),
+                ),
+
               ),
-            )
-          ],
+              userCountWidget()
+
+            ],
+          ),
+
+
         ),
 
-      ),
-      body: Center(
-        child: Stack(
-          children: [
-            // 채팅창 Container
-            Align(
+        body: StreamBuilder<int>(
+          stream: getNumUsers(), // Listen to the stream
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              // Show loading while waiting for the data
+              return Center(child: CircularProgressIndicator());
+            }
+
+            // Get the number of users
+            int numUsers = snapshot.data!;
+
+            // Create a list of widgets based on the number of users
+            List<Widget> faceIcons = [];
+
+            if (numUsers >= 1) {
+              faceIcons.add(const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Align(alignment: Alignment.topLeft, child: Icon(Icons.face, size: 50)),
+              ));
+            }
+            if (numUsers >= 2) {
+              faceIcons.add(const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
+              ));
+            }
+            if (numUsers >= 3) {
+              faceIcons.add(const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
+              ));
+            }
+            if (numUsers >= 4) {
+              faceIcons.add(const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
+              ));
+            }
+
+            return Stack(
+              children: [
+                // Background content of your page
+            Center(
+            child: Stack(
+            children: [
+              // 채팅창 Container
+              Align(
               alignment: Alignment.center,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -77,8 +195,8 @@ class _ChatPageState extends State<ChatPage> {
 
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.black,
-                        width: 1.0
+                          color: Colors.black,
+                          width: 1.0
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -134,28 +252,21 @@ class _ChatPageState extends State<ChatPage> {
             ),
             // 이모티콘들: 채팅방을 둘러싸도록 배치
 
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(alignment: Alignment.topLeft, child: Icon(Icons.face, size: 50)),
+            ],
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
-            ),
-          ],
+
+                // Overlay face icons based on number of users
+                ...faceIcons,
+              ],
+            );
+          },
         ),
       ),
-
     );
   }
+
+
 
   // Firestore에 메시지를 추가하는 함수
   Future<void> sendMessage() async {

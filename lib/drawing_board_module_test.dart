@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -219,19 +220,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Drawing Test',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MyHomePage(),
+      home: const DrawingPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+
+
+class DrawingPage extends StatefulWidget {
+
+  const DrawingPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<DrawingPage> createState() => _DrawingPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStateMixin {
 
   /// 绘制控制器
 
@@ -246,6 +250,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   bool isTimeLow = false;
 
   double _colorOpacity = 1;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   @override
   void initState() {
@@ -350,39 +357,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey,
       appBar: AppBar(
-        leading: PopupMenuButton<Color>(
-          icon: const Icon(Icons.color_lens),
-          onSelected: (ui.Color value) =>
-              _drawingController.setStyle(
-                  color: value.withOpacity(_colorOpacity)),
-          itemBuilder: (_) {
-            return <PopupMenuEntry<ui.Color>>[
-              PopupMenuItem<Color>(
-                child: StatefulBuilder(
-                  builder: (BuildContext context,
-                      Function(void Function()) setState) {
-                    return Slider(
-                      value: _colorOpacity,
-                      onChanged: (double v) {
-                        setState(() => _colorOpacity = v);
-                        _drawingController.setStyle(
-                          color: _drawingController.drawConfig.value.color
-                              .withOpacity(_colorOpacity),
 
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              ...Colors.accents.map((ui.Color color) {
-                return PopupMenuItem<ui.Color>(
-                    value: color,
-                    child: Container(width: 100, height: 50, color: color));
-              }),
-            ];
-          },
-        ),
         title: const Text('Drawing Test'),
         systemOverlayStyle: SystemUiOverlayStyle.light,
 
@@ -404,10 +379,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
             ),
           ),
           SizedBox(height: 20),
+
           Expanded(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                return DrawingBoard(
+                return
+
+                  DrawingBoard(
                   boardPanEnabled: false,
                   boardScaleEnabled: false,
                   transformationController: _transformationController,
@@ -418,12 +396,21 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                     color: Colors.white,
                   ),
                   showDefaultActions: true,
-                  showDefaultTools: true
-                  ,
+                  showDefaultTools: true,
 
                 );
+
               },
             ),
+          ),
+          Padding(
+              padding:  EdgeInsets.all(8.0)
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(4, (index) {
+              return  Icon(Icons.face, size: 50);
+            }),
           ),
 
           const Padding(

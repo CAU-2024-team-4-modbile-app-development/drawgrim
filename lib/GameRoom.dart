@@ -112,14 +112,12 @@ class _GameRoomState extends State<GameRoom> {
     }
   }
 
-  // 로그아웃 메서드
   void logOut() async {
     try {
-      // FirebaseAuth를 사용하여 로그아웃 처리
+
       await FirebaseAuth.instance.signOut();
 
-      // 로그아웃 후 이전 화면으로 돌아가기
-      Navigator.pop(context);  // 이전 페이지로 돌아가기
+      Navigator.pop(context);
     } catch (e) {
       print("Error logging out: $e");
     }
