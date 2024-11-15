@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'drawing_board_module_test.dart';
 
 class Selectorder extends StatefulWidget {
+
   const Selectorder({super.key});
 
   @override
@@ -27,7 +28,7 @@ class _SelectorderState extends State<Selectorder> {
               child: ElevatedButton(
                 onPressed: (){
                   Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => MyHomePage())
+                      builder: (context) => DrawingPage())
                   );
 
 
