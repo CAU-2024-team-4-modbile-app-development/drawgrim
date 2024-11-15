@@ -35,36 +35,55 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // 유저의 로그인 상태를 update
+  // 유저의 로그인 상태를 업데이트
   void updatePresence(bool isOnline) async {
     if (loggedUser != null) {
-      final docRef = FirebaseFirestore.instance
-          .collection('gameRooms')
-          .doc(widget.roomId)
-          .collection('onlineUsers')
-          .doc(loggedUser!.uid);
+      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+
+      // 플레이어가 방에 있는지 확인
+      final roomSnapshot = await roomRef.get();
+
+      if (!roomSnapshot.exists) {
+        print("Room does not exist.");
+        return;
+      }
+
+      final playersList = List<String>.from(roomSnapshot['players']); // 현재 플레이어 리스트
 
       if (isOnline) {
-        await docRef.set({
+        if (!playersList.contains(_authentication.currentUser!.email)) {
+          // 없으면 추가
+          await roomRef.update({
+            'players': FieldValue.arrayUnion([_authentication.currentUser!.email]),
+          });
+        }
+
+        await roomRef.collection('players').doc(_authentication.currentUser!.email).set({
           'username': loggedUser!.displayName ?? 'Anonymous',
           'isOnline': true,
         });
       } else {
-        await docRef.delete();
+        // 오프라인이면 doc의 플레이어 리스트 항목에서 제거
+        await roomRef.update({
+          'players': FieldValue.arrayRemove([_authentication.currentUser!.email]),
+        });
+
+        await roomRef.collection('players').doc(_authentication.currentUser!.email).delete();
       }
     }
   }
 
-  Stream<int> getNumUsers() {   // 현재 게임룸의 플레이어수를 실시간으로 get
+// Firestore에서 현재 게임룸의 플레이어 수를 실시간으로 가져오는 함수
+  Stream<int> getNumUsers() {
     return FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
-        .collection('onlineUsers')
+        .collection('players')
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
 
-
+// 유저 수를 표시하는 위젯
   Widget userCountWidget() {
     return StreamBuilder<int>(
       stream: getNumUsers(),
@@ -77,14 +96,18 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+// 게임룸에서 플레이어 제거
   void removePlayerFromGameRoom(String roomId) async {
     try {
+      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
 
-      await FirebaseFirestore.instance.collection('gameRooms').doc(roomId).update({
+
+      await roomRef.update({
         'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
       });
 
 
+      await roomRef.collection('players').doc(_authentication.currentUser?.email).delete();
     } catch (e) {
       print("Error removing player from room: $e");
     }

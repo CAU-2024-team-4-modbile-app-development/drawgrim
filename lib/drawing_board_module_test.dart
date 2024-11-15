@@ -279,6 +279,10 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     _timerController.forward();
   }
 
+
+
+
+
   @override
   void dispose() {
     _timerController.dispose();
@@ -422,6 +426,19 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
           ),
         ],
       ),
+    );
+  }
+}
+
+class Player {
+  final String uid;
+
+  Player({required this.uid});
+
+  // Create a Player from Firestore document
+  factory Player.fromFirestore(DocumentSnapshot doc) {
+    return Player(
+      uid: doc['uid'] ?? '',
     );
   }
 }
