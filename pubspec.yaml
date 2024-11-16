@@ -43,6 +43,7 @@ dependencies:
   flutter_drawing_board: ^0.9.5
   google_fonts: ^4.0.4
   firebase_storage: ^12.3.5
+  firebase_database: ^11.1.6
 
 
 

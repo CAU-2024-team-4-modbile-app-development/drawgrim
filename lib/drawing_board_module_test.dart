@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
+
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:convert'; //데이터 base64로 변환
+
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,7 +71,15 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
     // Start the timer when the game starts
     _timerController.forward();
+
+    Timer? _timer;
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _getImageData();
+    });
+    //1초마다 이미지 업로드
   }
+
+
 
   @override
   void dispose() {
@@ -77,71 +89,32 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
   }
 
   Future<void> _uploadImage(Uint8List imageData) async {
-    try {
-      // Create a reference to Firebase Storage
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('drawings/${DateTime.now().millisecondsSinceEpoch}.png');
+    String base64String = base64Encode(imageData);
 
-      // Upload the image
-      debugPrint('Uploading image...');
-      final uploadTask = ref.putData(imageData);
+    DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images').push();
+    await databaseRef.set({
+      'image_data': base64String,
+      'timestamp': ServerValue.timestamp,
+    });
 
-      // Monitor upload progress
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        debugPrint('Upload progress: ${snapshot.bytesTransferred} bytes of ${snapshot.totalBytes}');
-      });
+    String? key = databaseRef.key;
+    print("Uploaded Image Key: $key");
 
-      // Wait until the upload is complete
-      await uploadTask;
-
-      // Get the image URL
-      String downloadUrl = await ref.getDownloadURL();
-
-      // Save the URL to Firestore for real-time access
-      await FirebaseFirestore.instance.collection('drawings').add({
-        'imageUrl': downloadUrl,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      debugPrint('Image uploaded successfully, URL: $downloadUrl');
-    } catch (e) {
-      if (e is FirebaseException) {
-        debugPrint('FirebaseException: ${e.message}');
-      } else {
-        debugPrint('Error uploading image: $e');
-      }
-    }
-  }
-
-
-  Future<void> testUploadImage() async {
-    try {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('test_folder/test_image.png');
-
-      // Create a dummy image for testing (1x1 white pixel)
-      Uint8List imageData = Uint8List.fromList([255, 255, 255, 255]);
-
-      await ref.putData(imageData);
-      String downloadUrl = await ref.getDownloadURL();
-
-      print('Image uploaded successfully: $downloadUrl');
-    } catch (e) {
-      print('Error uploading image: $e');
-    }
   }
 
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    print(data);
     if (data == null) {
+
       debugPrint('Failed to get image data');
       return;
     }
-
     // Upload the image to Firebase
-    await testUploadImage();
+    //await testUploadImage();
+
+
+    await _uploadImage(data);
   }
 
   @override
@@ -185,18 +158,12 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                       showDefaultActions: true,
                       showDefaultTools: true,
                     );
+                    //DRAWING BOARD
                   },
                 ),
               ),
 
             ],
-          ),
-
-          Center(
-            child: ElevatedButton(
-              onPressed: _getImageData, // Upload the drawing when button pressed
-              child: Text('Upload Drawing'),
-            ),
           ),
 
           // Positioned 'Back' button at top-left
