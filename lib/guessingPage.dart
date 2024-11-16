@@ -1,7 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
-import 'package:flutter_drawing_board/paint_contents.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+
+import 'dart:convert';
 
 class ViewerPage extends StatefulWidget {
   const ViewerPage({Key? key}) : super(key: key);
@@ -16,40 +21,6 @@ class _ViewerPageState extends State<ViewerPage> {
   @override
   void initState() {
     super.initState();
-    _listenToDrawingUpdates();
-  }
-
-  // Listen to Firestore for updates
-  void _listenToDrawingUpdates() {
-    FirebaseFirestore.instance
-        .collection('drawings')
-        .doc('shared_drawing')
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data()?['drawingData'] as List<dynamic>;
-        final List<PaintContent> contents = data.map((item) {
-          return _paintContentFromJson(item as Map<String, dynamic>);
-        }).toList();
-
-        // Clear the current drawing and add the new data
-        _drawingController.clear();
-        _drawingController.addContents(contents);
-      }
-    });
-  }
-
-  PaintContent _paintContentFromJson(Map<String, dynamic> json) {
-    switch (json['type']) {
-      case 'StraightLine':
-        return StraightLine.fromJson(json);
-      case 'SimpleLine':
-        return SimpleLine.fromJson(json);
-      case 'Eraser':
-        return Eraser.fromJson(json);
-      default:
-        throw UnsupportedError('Unknown paint content type: ${json['type']}');
-    }
   }
 
   @override
@@ -72,12 +43,28 @@ class _ViewerPageState extends State<ViewerPage> {
             ),
           ),
           Expanded(
-            child: DrawingBoard(
-              controller: _drawingController,
-              boardPanEnabled: false,
-              boardScaleEnabled: false,
-              showDefaultTools: false, // Hide tools on viewer page
-              background: Container(color: Colors.white),
+            child: StreamBuilder<DatabaseEvent>(
+              stream: FirebaseDatabase.instance.ref('images').onValue,
+              //image 필드가 갱신될 때마다 그걸 감지함
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                //이미지 데이터가 아예 없다면 진행도 원 돌아가는거 뜸
+
+                final data = snapshot.data!.snapshot.value as Map;
+                List<Widget> imageWidgets = [];
+
+                data.forEach((key, value) {
+                  String base64String = value['image_data'];
+                  Uint8List imageData = base64Decode(base64String);
+
+                  imageWidgets.add(Image.memory(imageData));
+                  //Image.memory: Uint8List Type의 데이터를 이미지로 변환해줌
+                });
+
+                return ListView(children: imageWidgets);
+              },
             ),
           ),
         ],

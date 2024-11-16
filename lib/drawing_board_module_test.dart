@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
 
-import 'data:convert';
-
-
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:convert'; //데이터 base64로 변환
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,40 +79,11 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
   }
 
   Future<void> _uploadImage(Uint8List imageData) async {
-    try {
-      // Create a reference to Firebase Storage
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('drawings/${DateTime.now().millisecondsSinceEpoch}.png');
+    String base64String = base64Encode(imageData);
 
-      // Upload the image
-      debugPrint('Uploading image...');
-      final uploadTask = ref.putData(imageData);
+    DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images').push();
+    await databaseRef.set({'image_data': base64String});
 
-      // Monitor upload progress
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        debugPrint('Upload progress: ${snapshot.bytesTransferred} bytes of ${snapshot.totalBytes}');
-      });
-
-      // Wait until the upload is complete
-      await uploadTask;
-
-      // Get the image URL
-      String downloadUrl = await ref.getDownloadURL();
-
-      // Save the URL to Firestore for real-time access
-      await FirebaseFirestore.instance.collection('drawings').add({
-        'imageUrl': downloadUrl,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      debugPrint('Image uploaded successfully, URL: $downloadUrl');
-    } catch (e) {
-      if (e is FirebaseException) {
-        debugPrint('FirebaseException: ${e.message}');
-      } else {
-        debugPrint('Error uploading image: $e');
-      }
-    }
   }
 
   /// Capture the drawing data as image and upload
@@ -127,6 +96,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     }
     // Upload the image to Firebase
     //await testUploadImage();
+
 
     await _uploadImage(data);
   }
