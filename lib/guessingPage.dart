@@ -55,15 +55,14 @@ class _ViewerPageState extends State<ViewerPage> {
                 final data = snapshot.data!.snapshot.value as Map;
                 List<Widget> imageWidgets = [];
 
-                data.forEach((key, value) {
-                  String base64String = value['image_data'];
-                  Uint8List imageData = base64Decode(base64String);
+                var lastEntry = data.entries.last;
+                String base64String = lastEntry.value['image_data'];
 
-                  imageWidgets.add(Image.memory(imageData));
-                  //Image.memory: Uint8List Type의 데이터를 이미지로 변환해줌
-                });
+                // Base64 문자열 디코딩
+                Uint8List imageData = base64Decode(base64String);
+                print("Decoded Image Key: ${lastEntry.key}");
 
-                return ListView(children: imageWidgets);
+                return Image.memory(imageData);
               },
             ),
           ),

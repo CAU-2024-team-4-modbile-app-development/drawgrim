@@ -84,13 +84,16 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images').push();
     await databaseRef.set({'image_data': base64String});
 
+    String? key = databaseRef.key;
+    print("Uploaded Image Key: $key");
+
   }
 
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
     final Uint8List? data = (await _drawingController.getImageData())?.buffer.asUint8List();
-    print(data);
     if (data == null) {
+
       debugPrint('Failed to get image data');
       return;
     }
