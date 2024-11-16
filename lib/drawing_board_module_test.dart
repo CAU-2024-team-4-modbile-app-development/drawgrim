@@ -139,9 +139,10 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
       debugPrint('Failed to get image data');
       return;
     }
-
     // Upload the image to Firebase
-    await testUploadImage();
+    //await testUploadImage();
+
+    await _uploadImage(data);
   }
 
   @override
@@ -185,6 +186,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                       showDefaultActions: true,
                       showDefaultTools: true,
                     );
+                    //DRAWING BOARD
                   },
                 ),
               ),
@@ -194,7 +196,9 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
           Center(
             child: ElevatedButton(
-              onPressed: _getImageData, // Upload the drawing when button pressed
+              onPressed: (){
+                _getImageData();
+              }, // Upload the drawing when button pressed
               child: Text('Upload Drawing'),
             ),
           ),
