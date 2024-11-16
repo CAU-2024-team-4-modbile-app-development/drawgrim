@@ -82,7 +82,10 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     String base64String = base64Encode(imageData);
 
     DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images').push();
-    await databaseRef.set({'image_data': base64String});
+    await databaseRef.set({
+      'image_data': base64String,
+      'timestamp': ServerValue.timestamp,
+    });
 
     String? key = databaseRef.key;
     print("Uploaded Image Key: $key");

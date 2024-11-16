@@ -50,12 +50,13 @@ class _ViewerPageState extends State<ViewerPage> {
                 if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
                   return Center(child: CircularProgressIndicator());
                 }
-                //이미지 데이터가 아예 없다면 진행도 원 돌아가는거 뜸
 
                 final data = snapshot.data!.snapshot.value as Map;
-                List<Widget> imageWidgets = [];
+                List<MapEntry> sortedEntries = data.entries.toList()
+                  ..sort((a, b) => b.value['timestamp'].compareTo(a.value['timestamp']));
 
-                var lastEntry = data.entries.last;
+                // 가장 최신 항목 가져오기
+                var lastEntry = sortedEntries.first;
                 String base64String = lastEntry.value['image_data'];
 
                 // Base64 문자열 디코딩
