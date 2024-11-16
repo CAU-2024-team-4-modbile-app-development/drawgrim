@@ -5,6 +5,10 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
 
+import 'data:convert';
+
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -110,24 +114,6 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
       } else {
         debugPrint('Error uploading image: $e');
       }
-    }
-  }
-
-
-  Future<void> testUploadImage() async {
-    try {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child('test_folder/test_image.png');
-
-      // Create a dummy image for testing (1x1 white pixel)
-      Uint8List imageData = Uint8List.fromList([255, 255, 255, 255]);
-
-      await ref.putData(imageData);
-      String downloadUrl = await ref.getDownloadURL();
-
-      print('Image uploaded successfully: $downloadUrl');
-    } catch (e) {
-      print('Error uploading image: $e');
     }
   }
 
