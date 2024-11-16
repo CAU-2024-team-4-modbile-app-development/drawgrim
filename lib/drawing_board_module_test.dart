@@ -7,6 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:convert'; //데이터 base64로 변환
 
+import 'dart:async';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -69,7 +71,15 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
     // Start the timer when the game starts
     _timerController.forward();
+
+    Timer? _timer;
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _getImageData();
+    });
+    //1초마다 이미지 업로드
   }
+
+
 
   @override
   void dispose() {
@@ -154,15 +164,6 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
               ),
 
             ],
-          ),
-
-          Center(
-            child: ElevatedButton(
-              onPressed: (){
-                _getImageData();
-              }, // Upload the drawing when button pressed
-              child: Text('Upload Drawing'),
-            ),
           ),
 
           // Positioned 'Back' button at top-left
