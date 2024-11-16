@@ -202,7 +202,7 @@ fabric.properties
 
 
 /android/app/build.gradle
-/android/gradle/gradle-wrapper.properties
+/android/gradle/wrapper/gradle-wrapper.properties
 /android/build.gradle
 /android/gradle.properties
 /android/settings.gradle
