@@ -1,15 +1,14 @@
-
 import 'package:drawgrim/OpenPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 import 'uploadTestCase.dart';
 import 'guessingPage.dart';
+import 'SelectOrder.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -30,8 +29,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: OpenPage()
-
+      // home: OpenPage()
+      home: Selectorder(),
 
       // StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(), builder:(context,snapshot){
       //   if(snapshot.hasData){
@@ -43,5 +42,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-

@@ -37,7 +37,7 @@ class _SelectorderState extends State<Selectorder> {
         print("NULL 값임");
       }
 
-      _is_viewer = controller.findInput<bool>('is_green_on') as SMIBool;
+      _is_viewer = controller.findInput<bool>('view') as SMIBool;
 
       _is_drawer?.value = false;
       _is_viewer?.value = false;
