@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'drawing_board_module_test.dart'; // Assuming this is the page for drawing functionality
 import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
+import 'package:rive/rive.dart' hide Image;
+
 
 class Selectorder extends StatefulWidget {
 
@@ -11,6 +13,33 @@ class Selectorder extends StatefulWidget {
 }
 
 class _SelectorderState extends State<Selectorder> {
+
+
+  SMIInput<bool>? _is_drawer;
+  SMIInput<bool>? _is_viewer;
+
+  void _onRiveInit(Artboard artboard) {
+    print("ONINIT 실행됨");
+
+    final controller = StateMachineController.fromArtboard(
+      artboard,
+      'State Machine 1',
+      // onStateChange: _onStateChange,
+    );
+
+    if (controller != null) {
+      artboard.addController(controller);
+
+      _is_drawer =
+      controller.findInput<bool>('draw') as SMIBool;
+
+      _is_viewer = controller.findInput<bool>('is_green_on') as SMIBool;
+
+      _is_drawer?.value = false;
+      _is_viewer?.value = false;
+    }
+  }
+
   List<bool> roles = []; // List to hold roles of users (true = drawer, false = viewer)
   bool showMessage = true; // Flag to control whether to show the message
 
@@ -35,7 +64,7 @@ class _SelectorderState extends State<Selectorder> {
     roles.shuffle();
 
     // After 5 seconds, hide the message and start the game
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 10), () {
       setState(() {
         showMessage = false; // Hide the "Game will start" message
       });
@@ -92,13 +121,18 @@ class _SelectorderState extends State<Selectorder> {
             // If the message is still being shown (within the first 5 seconds)
             if (showMessage)
               Center(
-                child: Text(
-                  "5초 후에 게임 시작합니다",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                // child: Text(
+                //   "5초 후에 게임 시작합니다",
+                //   style: TextStyle(
+                //     fontSize: 24,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.black,
+                //   ),
+                // ),
+                child: RiveAnimation.asset(
+                  "assets/shuffle_drawer_and_viewer.riv",
+                  fit: BoxFit.contain,
+                  onInit: _onRiveInit,
                 ),
               ),
             // Chat container
