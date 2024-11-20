@@ -12,10 +12,12 @@ class Selectorder extends StatefulWidget {
   State<Selectorder> createState() => _SelectorderState();
 }
 
+SMIInput<bool>? _is_drawer;
+SMIInput<bool>? _is_viewer;
+
 class _SelectorderState extends State<Selectorder> {
 
-  SMIInput<bool>? _is_drawer;
-  SMIInput<bool>? _is_viewer;
+
 
   void _onRiveInit(Artboard artboard) {
     print("ONINIT 실행됨");
@@ -35,11 +37,13 @@ class _SelectorderState extends State<Selectorder> {
 
       if (_is_drawer == null) {
         print("NULL 값임");
+      }else{
+        print("NOT NULL");
       }
 
       _is_viewer = controller.findInput<bool>('view') as SMIBool;
 
-      _is_drawer?.value = false;
+      _is_drawer?.value = true;
       _is_viewer?.value = false;
     }else{
       print("CONTROLLER IS NULL");
@@ -112,10 +116,13 @@ class _SelectorderState extends State<Selectorder> {
               child: ElevatedButton(
                 onPressed: () {
                   // Temporary action: force navigation to DrawingPage for testing
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => DrawingPage()),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => DrawingPage()),
+                  // );
+
+
+
                 },
                 child: Text("임시 버튼", style: TextStyle(fontSize: 20)),
               ),
@@ -162,28 +169,6 @@ class _SelectorderState extends State<Selectorder> {
                     height: 500,
                   ),
                 ),
-              ),
-            ),
-            // Emojis around the chat container (for fun visual design)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Icon(Icons.face, size: 50),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Icon(Icons.face, size: 50),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: Icon(Icons.face_3, size: 50),
               ),
             ),
             const Padding(
