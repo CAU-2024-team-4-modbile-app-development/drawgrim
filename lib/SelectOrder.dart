@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'drawing_board_module_test.dart'; // Assuming this is the page for drawing functionality
 import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
-import 'package:rive/rive.dart' hide Image;
+import 'package:rive/rive.dart';
 
 
 class Selectorder extends StatefulWidget {
@@ -13,7 +13,6 @@ class Selectorder extends StatefulWidget {
 }
 
 class _SelectorderState extends State<Selectorder> {
-
 
   SMIInput<bool>? _is_drawer;
   SMIInput<bool>? _is_viewer;
@@ -28,16 +27,24 @@ class _SelectorderState extends State<Selectorder> {
     );
 
     if (controller != null) {
+      print("CONTROLLER IS NOT NULL");
       artboard.addController(controller);
 
       _is_drawer =
       controller.findInput<bool>('draw') as SMIBool;
 
+      if (_is_drawer == null) {
+        print("NULL 값임");
+      }
+
       _is_viewer = controller.findInput<bool>('is_green_on') as SMIBool;
 
       _is_drawer?.value = false;
       _is_viewer?.value = false;
+    }else{
+      print("CONTROLLER IS NULL");
     }
+
   }
 
   List<bool> roles = []; // List to hold roles of users (true = drawer, false = viewer)
@@ -46,6 +53,7 @@ class _SelectorderState extends State<Selectorder> {
   @override
   void initState() {
     super.initState();
+    print("INITIate");
 
     // Decide the number of total users and drawers
     int totalUsers = 5;  // Assume there are 5 users
@@ -64,26 +72,26 @@ class _SelectorderState extends State<Selectorder> {
     roles.shuffle();
 
     // After 5 seconds, hide the message and start the game
-    Future.delayed(const Duration(seconds: 10), () {
-      setState(() {
-        showMessage = false; // Hide the "Game will start" message
-      });
-
-      // Navigate based on the user's role after 5 seconds
-      if (roles[0]) {
-        // First user is a drawer
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => DrawingPage()), // Drawer page
-        );
-      } else {
-        // First user is a viewer
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ViewerPage()), // Viewer page
-        );
-      }
-    });
+    // Future.delayed(const Duration(seconds: 10), () {
+    //   setState(() {
+    //     showMessage = false; // Hide the "Game will start" message
+    //   });
+    //
+    //   // Navigate based on the user's role after 5 seconds
+    //   if (roles[0]) {
+    //     // First user is a drawer
+    //     Navigator.pushReplacement(
+    //       context,
+    //       MaterialPageRoute(builder: (context) => DrawingPage()), // Drawer page
+    //     );
+    //   } else {
+    //     // First user is a viewer
+    //     Navigator.pushReplacement(
+    //       context,
+    //       MaterialPageRoute(builder: (context) => ViewerPage()), // Viewer page
+    //     );
+    //   }
+    // });
   }
 
   @override
@@ -130,7 +138,7 @@ class _SelectorderState extends State<Selectorder> {
                 //   ),
                 // ),
                 child: RiveAnimation.asset(
-                  "assets/shuffle_drawer_and_viewer.riv",
+                  "asset/shuffle_drawer_and_viewer.riv",
                   fit: BoxFit.contain,
                   onInit: _onRiveInit,
                 ),
