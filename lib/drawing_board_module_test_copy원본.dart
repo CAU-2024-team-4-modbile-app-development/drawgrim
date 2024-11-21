@@ -7,8 +7,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+
 import 'package:flutter_drawing_board/paint_contents.dart';
+
 import 'package:flutter_drawing_board/paint_extension.dart';
 
 import 'test_data.dart';

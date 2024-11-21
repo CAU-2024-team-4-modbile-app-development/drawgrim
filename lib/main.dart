@@ -6,6 +6,9 @@ import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 
+import 'uploadTestCase.dart';
+import 'guessingPage.dart';
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -28,6 +31,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: OpenPage()
+
 
       // StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(), builder:(context,snapshot){
       //   if(snapshot.hasData){

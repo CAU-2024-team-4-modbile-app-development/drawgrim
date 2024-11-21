@@ -14,7 +14,6 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
   final _messageController = TextEditingController();
@@ -41,7 +40,8 @@ class _ChatPageState extends State<ChatPage> {
   void checkIfHost() async {
     try {
       // Firebase Firestore의 roomId를 사용하여 해당 방의 정보를 가져옴
-      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+      final roomRef =
+          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
 
       final roomSnapshot = await roomRef.get();
 
@@ -54,7 +54,10 @@ class _ChatPageState extends State<ChatPage> {
         if (createdBy == _authentication.currentUser?.email) {
           // 현재 사용자가 방장이라면 Firestore에 사용자 상태 업데이트
           try {
-            await roomRef.collection('players').doc(_authentication.currentUser!.email).set({
+            await roomRef
+                .collection('players')
+                .doc(_authentication.currentUser!.email)
+                .set({
               'username': _authentication.currentUser?.email ?? 'Anonymous',
               'isOnline': true,
               'isReady': true,
@@ -67,7 +70,7 @@ class _ChatPageState extends State<ChatPage> {
           // UI 업데이트
           setState(() {
             isReady = true; // 준비 상태
-            isHost = true;  // 방장 여부
+            isHost = true; // 방장 여부
           });
         }
       } else {
@@ -82,7 +85,8 @@ class _ChatPageState extends State<ChatPage> {
   // 유저의 로그인 상태를 업데이트
   void updatePresence(bool isOnline) async {
     if (loggedUser != null) {
-      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+      final roomRef =
+          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
 
       // 플레이어가 방에 있는지 확인
       final roomSnapshot = await roomRef.get();
@@ -92,29 +96,38 @@ class _ChatPageState extends State<ChatPage> {
         return;
       }
 
-      final playersList = List<String>.from(roomSnapshot['players']); // 현재 플레이어 리스트
+      final playersList =
+          List<String>.from(roomSnapshot['players']); // 현재 플레이어 리스트
 
       if (isOnline) {
         if (!playersList.contains(_authentication.currentUser!.email)) {
           // 없으면 추가
           await roomRef.update({
-            'players': FieldValue.arrayUnion([_authentication.currentUser!.email]),
+            'players':
+                FieldValue.arrayUnion([_authentication.currentUser!.email]),
           });
         }
 
-        await roomRef.collection('players').doc(_authentication.currentUser!.email).set({
+        await roomRef
+            .collection('players')
+            .doc(_authentication.currentUser!.email)
+            .set({
           'username': _authentication.currentUser!.email ?? 'Anonymous',
           'isOnline': true,
           'isReady': false, // 준비 상태 초기화
-          'isHost':false,
+          'isHost': false,
         });
       } else {
         // 오프라인이면 doc의 플레이어 리스트 항목에서 제거
         await roomRef.update({
-          'players': FieldValue.arrayRemove([_authentication.currentUser!.email]),
+          'players':
+              FieldValue.arrayRemove([_authentication.currentUser!.email]),
         });
 
-        await roomRef.collection('players').doc(_authentication.currentUser!.email).delete();
+        await roomRef
+            .collection('players')
+            .doc(_authentication.currentUser!.email)
+            .delete();
       }
     }
   }
@@ -122,23 +135,65 @@ class _ChatPageState extends State<ChatPage> {
   void toggleReady() async {
     setState(() {
       isReady = !isReady;
+      print("Ready State: $isReady");
     });
+
     if (loggedUser != null) {
-      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-      await roomRef.collection('players').doc(loggedUser!.email).update({
-        'isReady': isReady,
-      });
+      print("LOGGEDUSER METHOD");
+      try {
+        final roomRef = FirebaseFirestore.instance
+            .collection('gameRooms')
+            .doc(widget.roomId);
+        await roomRef.collection('players').doc(loggedUser!.email).update({
+          'isReady': isReady,
+        });
+        print(roomRef.collection('players').doc(loggedUser!.email));
+        //player 정보 확인용
+
+        final playerDoc =
+            await roomRef.collection('players').doc(loggedUser!.email).get();
+        print("isReady 상태: ${playerDoc.data()?['isReady']}");
+        //Ready상태 확인용
+
+        print("Player's ready state updated successfully!");
+      } catch (e) {
+        print("ERROR: $e");
+      }
     }
   }
 
 // 게임 시작 함수 (방장만 가능)
   void startGame() async {
+    print("START GAME PRESSED");
+    setState(() {
+      isReady = !isReady;
+      print("Host Ready State: $isReady");
+    });
+
     if (isHost) {
       // 게임 시작 전 준비된 플레이어가 모두 있는지 확인
-      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+      final roomRef =
+          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
       final playersSnapshot = await roomRef.collection('players').get();
       bool allReady = true;
+
+      print("업데이트중");
+
+      await roomRef.collection('players').doc(loggedUser!.email).update({
+        'isReady': isReady,
+      });
+
+      //host의 REady상태를 데이터베이스에 true로 업데이트
+
+      List<String> emails = playersSnapshot.docs.map((doc) => doc.id).toList();
+      //현재 게임 방에 있는 이메일 목록 리스트
+      print("Player Emails: $emails");
+
       for (var playerDoc in playersSnapshot.docs) {
+        print("isReady 상태: ${playerDoc.data()?['isReady']}");
+        print("이메일: ${playerDoc.data()?['email']}");
+        //디버깅용 문장
+
         if (!playerDoc['isReady']) {
           allReady = false;
           break;
@@ -161,6 +216,7 @@ class _ChatPageState extends State<ChatPage> {
           SnackBar(content: Text('모든 플레이어가 준비되어야 게임을 시작할 수 있습니다.')),
         );
       }
+      print("ALL READY STATE: $allReady");
     }
   }
 
@@ -185,13 +241,17 @@ class _ChatPageState extends State<ChatPage> {
   // 게임룸에서 플레이어 제거
   void removePlayerFromGameRoom(String roomId) async {
     try {
-      final roomRef = FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
+      final roomRef =
+          FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
 
       await roomRef.update({
         'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
       });
 
-      await roomRef.collection('players').doc(_authentication.currentUser?.email).delete();
+      await roomRef
+          .collection('players')
+          .doc(_authentication.currentUser?.email)
+          .delete();
     } catch (e) {
       print("Error removing player from room: $e");
     }
@@ -218,11 +278,12 @@ class _ChatPageState extends State<ChatPage> {
               // 게임 시작 버튼 (방장만 클릭 가능)
               if (isHost)
                 ElevatedButton(
+
                   onPressed: startGame,
                   child: Text("게임 시작", style: TextStyle(fontSize: 20)),
                 ),
               // 준비 상태 버튼
-              if(!isHost)
+              if (!isHost)
                 ElevatedButton(
                   onPressed: toggleReady,
                   child: Text(isReady ? "준비 완료" : "준비하기"),
@@ -265,25 +326,33 @@ class _ChatPageState extends State<ChatPage> {
                 if (numUsers >= 1) {
                   faceIcons.add(const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Align(alignment: Alignment.topLeft, child: Icon(Icons.face, size: 50)),
+                    child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Icon(Icons.face, size: 50)),
                   ));
                 }
                 if (numUsers >= 2) {
                   faceIcons.add(const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Align(alignment: Alignment.topRight, child: Icon(Icons.face, size: 50)),
+                    child: Align(
+                        alignment: Alignment.topRight,
+                        child: Icon(Icons.face, size: 50)),
                   ));
                 }
                 if (numUsers >= 3) {
                   faceIcons.add(const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Align(alignment: Alignment.bottomLeft, child: Icon(Icons.face_3, size: 50)),
+                    child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Icon(Icons.face_3, size: 50)),
                   ));
                 }
                 if (numUsers >= 4) {
                   faceIcons.add(const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Align(alignment: Alignment.bottomRight, child: Icon(Icons.face_4, size: 50)),
+                    child: Align(
+                        alignment: Alignment.bottomRight,
+                        child: Icon(Icons.face_4, size: 50)),
                   ));
                 }
 
@@ -303,9 +372,7 @@ class _ChatPageState extends State<ChatPage> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: Colors.black,
-                                        width: 1.0
-                                    ),
+                                        color: Colors.black, width: 1.0),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   width: 500,
@@ -322,16 +389,22 @@ class _ChatPageState extends State<ChatPage> {
                                               .orderBy('timestamp')
                                               .snapshots(),
                                           builder: (context, snapshot) {
-                                            if (snapshot.connectionState == ConnectionState.waiting) {
-                                              return Center(child: CircularProgressIndicator());
+                                            if (snapshot.connectionState ==
+                                                ConnectionState.waiting) {
+                                              return Center(
+                                                  child:
+                                                      CircularProgressIndicator());
                                             }
                                             final docs = snapshot.data!.docs;
                                             return ListView.builder(
                                               itemCount: docs.length,
                                               itemBuilder: (context, index) {
                                                 return ChatElement(
-                                                  isMe: docs[index]['uid'] == _authentication.currentUser!.uid,
-                                                  userName: docs[index]['userName'],
+                                                  isMe: docs[index]['uid'] ==
+                                                      _authentication
+                                                          .currentUser!.uid,
+                                                  userName: docs[index]
+                                                      ['userName'],
                                                   text: docs[index]['text'],
                                                 );
                                               },
@@ -371,8 +444,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-
-
   // Firestore에 메시지를 추가하는 함수
   Future<void> sendMessage() async {
     if (newMessage.trim().isEmpty) return;
@@ -386,7 +457,8 @@ class _ChatPageState extends State<ChatPage> {
             .get();
 
         if (currentUserInfo.exists) {
-          await FirebaseFirestore.instance.collection('gameRooms')
+          await FirebaseFirestore.instance
+              .collection('gameRooms')
               .doc(widget.roomId)
               .collection('messages')
               .add({
