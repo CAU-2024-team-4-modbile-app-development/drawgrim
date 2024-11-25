@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drawgrim/DecideSubject.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
@@ -18,6 +19,7 @@ class _ChatPageState extends State<ChatPage> {
   User? loggedUser;
   final _messageController = TextEditingController();
   String newMessage = '';
+
   bool isReady = false; // 준비 상태
   bool isHost = false; // 방장 여부
 
@@ -209,7 +211,7 @@ class _ChatPageState extends State<ChatPage> {
         // 게임 시작
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Selectorder()),
+          MaterialPageRoute(builder: (context) => DecideSubject()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -308,7 +310,7 @@ class _ChatPageState extends State<ChatPage> {
               Future.delayed(Duration.zero, () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => Selectorder()),
+                  MaterialPageRoute(builder: (context) => DecideSubject()),
                 );
               });
             }

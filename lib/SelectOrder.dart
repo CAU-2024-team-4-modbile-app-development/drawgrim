@@ -50,7 +50,6 @@ class _SelectorderState extends State<Selectorder> {
     });
 
     roles.shuffle();
-    
 
     if (roles[0]) {
       // First user is a drawer
