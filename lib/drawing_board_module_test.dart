@@ -38,8 +38,6 @@ class DrawingPage extends StatefulWidget {
 
 class _DrawingPageState extends State<DrawingPage> {
   final DrawingController _drawingController = DrawingController();
-  final TransformationController _transformationController = TransformationController();
-
   final String promptWord = "애 호 박"; // 예시 단어
   bool isTimeLow = false;
 
@@ -74,8 +72,9 @@ class _DrawingPageState extends State<DrawingPage> {
     super.initState();
 
     // 일정 시간마다 이미지 데이터를 업로드합니다.
-    Timer.periodic(Duration(microseconds: 600), (timer) {
+    Timer.periodic(Duration(microseconds: 700), (timer) {
       _getImageData();
+      //yum
     });
   }
 
@@ -104,7 +103,6 @@ class _DrawingPageState extends State<DrawingPage> {
                     return DrawingBoard(
                       boardPanEnabled: false,
                       boardScaleEnabled: false,
-                      transformationController: _transformationController,
                       controller: _drawingController,
                       background: Container(
                         width: constraints.maxWidth,
