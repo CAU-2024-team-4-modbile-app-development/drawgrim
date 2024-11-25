@@ -1,3 +1,4 @@
+import 'package:drawgrim/DecideSubject.dart';
 import 'package:drawgrim/OpenPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'uploadTestCase.dart';
 import 'guessingPage.dart';
 import 'SelectOrder.dart';
+import 'Ranking.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +32,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // home: OpenPage()
-      home: Selectorder(),
+      // home: Ranking(first: "FIRST", second: "SECOND", third: "THIRD",),
+      home: DecideSubject(),
 
       // StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(), builder:(context,snapshot){
       //   if(snapshot.hasData){
