@@ -80,6 +80,9 @@ class _SelectorderState extends State<Selectorder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("순서 선택"),
+      ),
       body: Center(
         child: Center(
           child: RiveAnimation.asset(

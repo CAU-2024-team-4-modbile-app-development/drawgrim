@@ -167,10 +167,6 @@ class _ChatPageState extends State<ChatPage> {
 // 게임 시작 함수 (방장만 가능)
   void startGame() async {
     print("START GAME PRESSED");
-    setState(() {
-      isReady = !isReady;
-      print("Host Ready State: $isReady");
-    });
 
     if (isHost) {
       // 게임 시작 전 준비된 플레이어가 모두 있는지 확인
@@ -306,7 +302,6 @@ class _ChatPageState extends State<ChatPage> {
 
             final roomData = snapshot.data?.data() as Map<String, dynamic>?;
             if (roomData != null && roomData['gameStarted'] == true) {
-              // 게임이 시작되었으면 Selectorder 페이지로 이동
               Future.delayed(Duration.zero, () {
                 Navigator.pushReplacement(
                   context,
