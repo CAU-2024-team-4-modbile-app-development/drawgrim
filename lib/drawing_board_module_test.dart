@@ -39,13 +39,9 @@ class DrawingPage extends StatefulWidget {
 class _DrawingPageState extends State<DrawingPage> {
   final DrawingController _drawingController = DrawingController();
   final TransformationController _transformationController = TransformationController();
-  late AnimationController _timerController;
 
-  final String promptWord = "애 호 박";
-  Color timeColor = Colors.green;
-  double timeWidth = 300.0;
+  final String promptWord = "애 호 박"; // 예시 단어
   bool isTimeLow = false;
-  final double first_timeWidth = 300.0;
 
   // Firebase Database에 이미지를 업로드하는 메소드
   Future<void> _uploadImage(Uint8List imageData) async {
@@ -78,7 +74,7 @@ class _DrawingPageState extends State<DrawingPage> {
     super.initState();
 
     // 일정 시간마다 이미지 데이터를 업로드합니다.
-    Timer.periodic(Duration(microseconds: 500), (timer) {
+    Timer.periodic(Duration(microseconds: 600), (timer) {
       _getImageData();
     });
   }
@@ -92,25 +88,14 @@ class _DrawingPageState extends State<DrawingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey,
       body: Stack(
         children: <Widget>[
-          // Main content
           Column(
             children: <Widget>[
               SizedBox(height: 25),
               Text(
                 promptWord,
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Transform.translate(
-                offset: isTimeLow ? Offset(5 * (0.5 - _timerController.value), 0) : Offset(0, 0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * (timeWidth / first_timeWidth),
-                  height: 3,
-                  color: timeColor,
-                ),
               ),
               SizedBox(height: 10),
               Expanded(
