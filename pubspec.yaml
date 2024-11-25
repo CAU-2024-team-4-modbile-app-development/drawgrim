@@ -47,8 +47,8 @@ dependencies:
   rive: ^0.13.17
   provider: ^6.1.2
   audioplayers: ^6.1.0
-
-
+  web_socket_channel: ^2.1.0
+  image: ^3.0.1
 
 
 dev_dependencies:
