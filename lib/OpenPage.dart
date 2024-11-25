@@ -25,7 +25,7 @@ class OpenPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 10,
@@ -64,7 +64,7 @@ class OpenPage extends StatelessWidget {
                     ),
                     elevation: 5,
                   ),
-                  child: const Text(
+                  child: Text(
                     '로그인',
                     style: TextStyle(
                       fontSize: 20,
@@ -91,7 +91,7 @@ class OpenPage extends StatelessWidget {
                     ),
                     elevation: 5,
                   ),
-                  child: const Text(
+                  child: Text(
                     '회원가입',
                     style: TextStyle(
                       fontSize: 20,
