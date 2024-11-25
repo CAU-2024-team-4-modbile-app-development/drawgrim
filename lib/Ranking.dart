@@ -117,7 +117,7 @@ class _RankingState extends State<Ranking> {
               onPressed: () {
                 // Navigator.pop(context);
               },
-              child: Text(
+              child: const Text(
                 "나가기",
                 style: TextStyle(fontSize: 40),
               ),

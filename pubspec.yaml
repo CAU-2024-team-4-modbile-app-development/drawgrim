@@ -47,9 +47,7 @@ dependencies:
   rive: ^0.13.17
   provider: ^6.1.2
   audioplayers: ^6.1.0
-
-
-
+  flutter_image_compress: ^2.3.0  # 여기에 추가
 
 dev_dependencies:
   flutter_test:
