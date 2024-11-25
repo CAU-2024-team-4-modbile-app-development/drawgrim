@@ -50,7 +50,6 @@ class _SelectorderState extends State<Selectorder> {
     });
 
     roles.shuffle();
-    
 
     if (roles[0]) {
       // First user is a drawer
@@ -81,10 +80,13 @@ class _SelectorderState extends State<Selectorder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("순서 선택"),
+      ),
       body: Center(
         child: Center(
           child: RiveAnimation.asset(
-            "asset/제비뽑기.riv",
+            "assets/제비뽑기.riv",
             fit: BoxFit.contain,
             onInit: _onRiveInit,
           ),

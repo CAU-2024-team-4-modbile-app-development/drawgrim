@@ -41,7 +41,7 @@ class _RankingState extends State<Ranking> {
               children: [
                 Positioned.fill(
                   child: RiveAnimation.asset(
-                    "asset/medal.riv",
+                    "assets/medal.riv",
                     fit: BoxFit.contain,
                     onInit: _onRiveInit,
                   ),

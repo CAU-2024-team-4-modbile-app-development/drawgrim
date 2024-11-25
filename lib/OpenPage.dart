@@ -36,7 +36,7 @@ class OpenPage extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.asset(
-                  'asset/background.png',
+                  'assets/background.png',
                   fit: BoxFit.cover,
                 ),
               ),
