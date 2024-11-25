@@ -86,7 +86,7 @@ class _SelectorderState extends State<Selectorder> {
       body: Center(
         child: Center(
           child: RiveAnimation.asset(
-            "asset/제비뽑기.riv",
+            "assets/제비뽑기.riv",
             fit: BoxFit.contain,
             onInit: _onRiveInit,
           ),
