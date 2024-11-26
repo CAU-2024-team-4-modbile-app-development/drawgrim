@@ -23,7 +23,6 @@ class Words extends ChangeNotifier {
     } else{
       return animalList;
     }
-
   }
 
 
