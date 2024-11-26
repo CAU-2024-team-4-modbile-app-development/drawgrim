@@ -8,6 +8,8 @@ import 'dart:convert';
 class ViewerPage extends StatelessWidget {
   const ViewerPage({Key? key}) : super(key: key);
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,6 +41,8 @@ class ViewerPage extends StatelessWidget {
 
                 var lastEntry = sortedEntries.first;
                 String base64String = lastEntry.value['image_data'];
+
+
 
                 // Base64 문자열을 디코딩해서 이미지로 변환
                 Uint8List imageData = base64Decode(base64String);

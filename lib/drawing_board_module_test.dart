@@ -45,14 +45,32 @@ class _DrawingPageState extends State<DrawingPage> {
   Future<void> _uploadImage(Uint8List imageData) async {
     String base64String = base64Encode(imageData);
 
-    DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images').push();
-    await databaseRef.set({
+    DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images');
+    DatabaseReference newImageRef = databaseRef.push();
+
+    // 새 이미지 업로드
+    await newImageRef.set({
       'image_data': base64String,
       'timestamp': ServerValue.timestamp,
     });
 
-    String? key = databaseRef.key;
-    print("Uploaded Image Key: $key");
+    // 데이터 정리: 최신 10개만 유지
+    DatabaseEvent event = await databaseRef.orderByChild('timestamp').once();
+    DataSnapshot snapshot = event.snapshot;
+
+    Map<dynamic, dynamic>? images = snapshot.value as Map?;
+
+    if (images != null && images.length > 10) {
+      // 오래된 데이터 삭제
+      var sortedKeys = images.keys.toList()
+        ..sort((a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
+
+      for (int i = 0; i < images.length - 10; i++) {
+        await databaseRef.child(sortedKeys[i]).remove();
+      }
+    }
+
+    print("Uploaded Image and cleaned up old entries.");
   }
 
   // 그림 데이터를 주기적으로 Firebase에 업로드
