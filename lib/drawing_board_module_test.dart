@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+//import 'package:flutter_drawing_board/flutter_drawing_board.dart';
+import 'package:new_drawing_board_package/new_drawing_board.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -76,7 +77,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       _getImageData();
     });
-    //1초마다 이미지 업로드
+    //upload image every 1 second
   }
 
 
@@ -93,13 +94,13 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     DatabaseReference databaseRef = FirebaseDatabase.instance.ref('images');
     DatabaseReference newImageRef = databaseRef.push();
 
-    // 새 이미지 업로드
+    // upload new image
     await newImageRef.set({
       'image_data': base64String,
       'timestamp': ServerValue.timestamp,
     });
 
-    // 데이터 정리: 최신 10개만 유지
+    // organize data: maintain last 10 images
     DatabaseEvent event = await databaseRef.orderByChild('timestamp').once();
     DataSnapshot snapshot = event.snapshot;
 

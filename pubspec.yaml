@@ -28,6 +28,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  new_drawing_board_package:
+    path: local_packages/new_drawing_board_package
   flutter:
     sdk: flutter
 
