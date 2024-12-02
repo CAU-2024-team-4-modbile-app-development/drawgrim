@@ -5,7 +5,9 @@ import 'testGuessingPage.dart';
 import 'package:rive/rive.dart';
 
 class Selectorder extends StatefulWidget {
-  const Selectorder({super.key});
+  final String roomId;
+
+  const Selectorder({super.key, required this.roomId});
 
   @override
   State<Selectorder> createState() => _SelectorderState();
@@ -82,7 +84,14 @@ class _SelectorderState extends State<Selectorder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("순서 선택"),
+        title: Text(
+          "순서 정하기",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Center(
         child: Center(

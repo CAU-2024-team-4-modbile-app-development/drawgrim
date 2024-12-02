@@ -15,6 +15,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
   final _messageController = TextEditingController();
@@ -207,7 +208,9 @@ class _ChatPageState extends State<ChatPage> {
         // 게임 시작
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => DecideSubject()),
+          MaterialPageRoute(
+            builder: (context) => DecideSubject(roomId: widget.roomId),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +308,7 @@ class _ChatPageState extends State<ChatPage> {
               Future.delayed(Duration.zero, () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => DecideSubject()),
+                  MaterialPageRoute(builder: (context) => DecideSubject(roomId: widget.roomId,)),
                 );
               });
             }

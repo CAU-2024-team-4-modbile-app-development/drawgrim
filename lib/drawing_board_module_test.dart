@@ -5,6 +5,9 @@ import 'package:new_drawing_board_package/new_drawing_board.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'Words.dart';
+import 'package:provider/provider.dart';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:convert'; //데이터 base64로 변환
 
@@ -14,6 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(const MyApp());
+
 }
 
 class MyApp extends StatelessWidget {
@@ -45,6 +49,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
   final double first_timeWidth = 300.0;
   double timeWidth = 300.0;
   bool isTimeLow = false;
+
 
   double _colorOpacity = 1;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
