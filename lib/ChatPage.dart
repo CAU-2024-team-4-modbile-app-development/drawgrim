@@ -1,13 +1,9 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:drawgrim/DecideSubject.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
-
-import 'Words.dart';
-import 'dart:math';
+import 'SelectOrder.dart';
 
 class ChatPage extends StatefulWidget {
   final String roomId; // 채팅방 ID
@@ -32,6 +28,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     getCurrentUser();
+    updatePresence(true);
     checkIfHost();
   }
 
@@ -43,11 +40,11 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> checkIfHost() async {
+  void checkIfHost() async {
     try {
       // Firebase Firestore의 roomId를 사용하여 해당 방의 정보를 가져옴
       final roomRef =
-          await FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
 
       final roomSnapshot = await roomRef.get();
 
@@ -58,6 +55,22 @@ class _ChatPageState extends State<ChatPage> {
 
         // 현재 사용자가 방장과 일치하는지 확인
         if (createdBy == _authentication.currentUser?.email) {
+          // 현재 사용자가 방장이라면 Firestore에 사용자 상태 업데이트
+          try {
+            await roomRef
+                .collection('players')
+                .doc(_authentication.currentUser!.email)
+                .set({
+              'username': _authentication.currentUser?.email ?? 'Anonymous',
+              'isOnline': true,
+              'isReady': true,
+              'isHost': true,
+            });
+            print('Player data successfully written to Firestore');
+          } catch (e) {
+            print('Error writing player data to Firestore: $e');
+          }
+          // UI 업데이트
           setState(() {
             isReady = true; // 준비 상태
             isHost = true; // 방장 여부
@@ -70,19 +83,16 @@ class _ChatPageState extends State<ChatPage> {
       // 오류가 발생했을 때 처리
       print('Error checking host: $e');
     }
-
-    await updatePresence(true);
   }
 
   // 유저의 로그인 상태를 업데이트
-  Future<void> updatePresence(bool isOnline) async {
-
-    final roomRef =
-    await FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-
-    final roomSnapshot = await roomRef.get();
-
+  void updatePresence(bool isOnline) async {
     if (loggedUser != null) {
+      final roomRef =
+          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+
+      // 플레이어가 방에 있는지 확인
+      final roomSnapshot = await roomRef.get();
 
       if (!roomSnapshot.exists) {
         print("Room does not exist.");
@@ -101,29 +111,15 @@ class _ChatPageState extends State<ChatPage> {
           });
         }
 
-        if(isHost == true){
-          await roomRef
-              .collection('players')
-              .doc(_authentication.currentUser!.email)
-              .set({
-            'username': _authentication.currentUser!.email ?? 'Anonymous',
-            'isOnline': true,
-            'isReady': true, // 준비 상태 초기화
-            'isHost': true,
-          });
-          await updateSubject();
-        }else{
-          await roomRef
-              .collection('players')
-              .doc(_authentication.currentUser!.email)
-              .set({
-            'username': _authentication.currentUser!.email ?? 'Anonymous',
-            'isOnline': true,
-            'isReady': false, // 준비 상태 초기화
-            'isHost': false,
-          });
-        }
-
+        await roomRef
+            .collection('players')
+            .doc(_authentication.currentUser!.email)
+            .set({
+          'username': _authentication.currentUser!.email ?? 'Anonymous',
+          'isOnline': true,
+          'isReady': false, // 준비 상태 초기화
+          'isHost': false,
+        });
       } else {
         // 오프라인이면 doc의 플레이어 리스트 항목에서 제거
         // await roomRef.update({
@@ -138,47 +134,6 @@ class _ChatPageState extends State<ChatPage> {
       }
     }
   }
-
-  Future<void> updateSubject() async {
-    Words words = Words();
-    String subject = '';
-
-    final random = Random();
-    final int randomIndex = random.nextInt(3);
-
-    switch (randomIndex) {
-      case 0:
-        setState(() {
-          subject = "food";
-        });
-
-        break;
-      case 1:
-        setState(() {
-          subject = "animal";
-        });
-
-        break;
-      case 2:
-        setState(() {
-          subject = "plant";
-        });
-
-        break;
-    }
-
-    await FirebaseFirestore.instance
-        .collection('gameRooms')
-        .doc(widget.roomId)
-        .collection('subject')
-        .add({
-      'subject': subject,
-      'elements': words.returnSubjectList(subject),
-    });
-  }
-
-
-
 
   void toggleReady() async {
     setState(() {
@@ -223,6 +178,12 @@ class _ChatPageState extends State<ChatPage> {
 
       print("업데이트중");
 
+      await roomRef.collection('players').doc(loggedUser!.email).update({
+        'isReady': isReady,
+      });
+
+      //host의 REady상태를 데이터베이스에 true로 업데이트
+
       List<String> emails = playersSnapshot.docs.map((doc) => doc.id).toList();
       //현재 게임 방에 있는 이메일 목록 리스트
       print("Player Emails: $emails");
@@ -231,6 +192,8 @@ class _ChatPageState extends State<ChatPage> {
         print("isReady 상태: ${playerDoc.data()?['isReady']}");
         print("이메일: ${playerDoc.data()?['email']}");
         //디버깅용 문장
+
+
 
         if (!playerDoc['isReady']) {
           allReady = false;

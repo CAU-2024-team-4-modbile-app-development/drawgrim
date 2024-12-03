@@ -1,13 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 import 'SelectOrder.dart';
+import 'Words.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'dart:math';
 
 class DecideSubject extends StatefulWidget {
   final String roomId;
 
   const DecideSubject({super.key, required this.roomId});
+
 
   @override
   State<DecideSubject> createState() => _DecideSubjectState();
@@ -17,10 +21,14 @@ SMIInput<bool>? _isFood;
 SMIInput<bool>? _isPlant;
 SMIInput<bool>? _isAnimal;
 
-class _DecideSubjectState extends State<DecideSubject> {
-  String subject = '';
 
-  void _onRiveInit(Artboard artboard) async {
+class _DecideSubjectState extends State<DecideSubject> {
+
+  bool isHost = false; // 방장 여부
+
+  void _onRiveInit(Artboard artboard) async{
+    String subject = "";
+
     final controller = StateMachineController.fromArtboard(
       artboard,
       'Cards',
@@ -38,35 +46,55 @@ class _DecideSubjectState extends State<DecideSubject> {
       _isAnimal?.value = false;
       _isPlant?.value = false;
 
-      final roomRef =
-          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-      final QuerySnapshot subjectSnapshot =
-          await roomRef.collection('subject').get();
+      // final random = Random();
+      // final int randomIndex = random.nextInt(3);
+      //
+      // switch(randomIndex){
+      //   case 0:
+      //     _isFood?.value = true;
+      //
+      //     break;
+      //   case 1:
+      //     _isAnimal?.value = true;
+      //     break;
+      //   case 2:
+      //     _isPlant?.value = true;
+      //     break;
+      // }
 
-      final String subject = subjectSnapshot.docs.first['subject'];
+      _isFood?.value = true;
+      subject = "food";
 
-      switch (subject) {
-        case 'food':
-          _isFood?.value = true;
-          break;
-        case 'animal':
-          _isAnimal?.value = true;
-          break;
-        case 'plant':
-          _isPlant?.value = true;
-          break;
-      }
+      // await updateSubject(subject);
+
+      //Food로 고정
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> updateSubject(String subject)async{
+    Words words = Words();
+
+
+    await FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('subject')
+        .add({
+      'subject': subject,
+      'elements': words.returnSubjectList(subject),
+    });
   }
 
   void _onStateChange(String stateMachineName, String stateName) async {
     if (stateName == 'ExitState') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (context) => Selectorder(
-                  roomId: widget.roomId,
-                )), // Drawer page
+        MaterialPageRoute(builder: (context) => Selectorder(roomId: widget.roomId,)), // Drawer page
       );
     }
   }
