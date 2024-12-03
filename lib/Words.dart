@@ -104,7 +104,7 @@ class Words{
     '에이드',
   ];
   final List<String> plantList = ["사시 나무", "오동 나무", "카카오 나무"];
-  final List<String> animalList = ["개", "고양이"];
+  final List<String> animalList = ["개", "고양이", "나무늘보"];
 
   List<String> returnSubjectList(String subject) {
     if (subject == "food") {

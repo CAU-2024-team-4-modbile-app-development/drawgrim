@@ -1,8 +1,13 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:drawgrim/DecideSubject.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
+
+import 'Words.dart';
+import 'dart:math';
 
 class ChatPage extends StatefulWidget {
   final String roomId; // 채팅방 ID
@@ -27,7 +32,6 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     getCurrentUser();
-    updatePresence(true);
     checkIfHost();
   }
 
@@ -66,6 +70,9 @@ class _ChatPageState extends State<ChatPage> {
       // 오류가 발생했을 때 처리
       print('Error checking host: $e');
     }
+
+    await updateSubject();
+    await updatePresence(true);
   }
 
   // 유저의 로그인 상태를 업데이트
@@ -77,11 +84,6 @@ class _ChatPageState extends State<ChatPage> {
     final roomSnapshot = await roomRef.get();
 
     if (loggedUser != null) {
-      final roomRef =
-          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-
-      // 플레이어가 방에 있는지 확인
-      final roomSnapshot = await roomRef.get();
 
       if (!roomSnapshot.exists) {
         print("Room does not exist.");
@@ -136,6 +138,47 @@ class _ChatPageState extends State<ChatPage> {
       }
     }
   }
+
+  Future<void> updateSubject() async {
+    Words words = Words();
+    String subject = '';
+
+    final random = Random();
+    final int randomIndex = random.nextInt(3);
+
+    switch (randomIndex) {
+      case 0:
+        setState(() {
+          subject = "food";
+        });
+
+        break;
+      case 1:
+        setState(() {
+          subject = "animal";
+        });
+
+        break;
+      case 2:
+        setState(() {
+          subject = "plant";
+        });
+
+        break;
+    }
+
+    await FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('subject')
+        .add({
+      'subject': subject,
+      'elements': words.returnSubjectList(subject),
+    });
+  }
+
+
+
 
   void toggleReady() async {
     setState(() {
