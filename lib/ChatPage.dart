@@ -71,7 +71,6 @@ class _ChatPageState extends State<ChatPage> {
       print('Error checking host: $e');
     }
 
-    await updateSubject();
     await updatePresence(true);
   }
 
@@ -112,6 +111,7 @@ class _ChatPageState extends State<ChatPage> {
             'isReady': true, // 준비 상태 초기화
             'isHost': true,
           });
+          await updateSubject();
         }else{
           await roomRef
               .collection('players')

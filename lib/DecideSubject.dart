@@ -45,8 +45,6 @@ class _DecideSubjectState extends State<DecideSubject> {
 
       final String subject = subjectSnapshot.docs.first['subject'];
 
-      print(subject);
-
       switch (subject) {
         case 'food':
           _isFood?.value = true;
