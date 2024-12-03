@@ -46,26 +46,10 @@ class _DecideSubjectState extends State<DecideSubject> {
       _isAnimal?.value = false;
       _isPlant?.value = false;
 
-      // final random = Random();
-      // final int randomIndex = random.nextInt(3);
-      //
-      // switch(randomIndex){
-      //   case 0:
-      //     _isFood?.value = true;
-      //
-      //     break;
-      //   case 1:
-      //     _isAnimal?.value = true;
-      //     break;
-      //   case 2:
-      //     _isPlant?.value = true;
-      //     break;
-      // }
-
       _isFood?.value = true;
       subject = "food";
 
-      // await updateSubject(subject);
+      await updateSubject(subject);
 
       //Food로 고정
     }

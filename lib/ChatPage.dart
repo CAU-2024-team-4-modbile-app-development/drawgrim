@@ -3,7 +3,6 @@ import 'package:drawgrim/DecideSubject.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
-import 'SelectOrder.dart';
 
 class ChatPage extends StatefulWidget {
   final String roomId; // 채팅방 ID
@@ -40,11 +39,11 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void checkIfHost() async {
+  Future<void> checkIfHost() async {
     try {
       // Firebase Firestore의 roomId를 사용하여 해당 방의 정보를 가져옴
       final roomRef =
-          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+          await FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
 
       final roomSnapshot = await roomRef.get();
 
@@ -86,7 +85,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   // 유저의 로그인 상태를 업데이트
-  void updatePresence(bool isOnline) async {
+  Future<void> updatePresence(bool isOnline) async {
     if (loggedUser != null) {
       final roomRef =
           FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
@@ -192,8 +191,6 @@ class _ChatPageState extends State<ChatPage> {
         print("isReady 상태: ${playerDoc.data()?['isReady']}");
         print("이메일: ${playerDoc.data()?['email']}");
         //디버깅용 문장
-
-
 
         if (!playerDoc['isReady']) {
           allReady = false;
