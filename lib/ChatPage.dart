@@ -122,15 +122,15 @@ class _ChatPageState extends State<ChatPage> {
         });
       } else {
         // 오프라인이면 doc의 플레이어 리스트 항목에서 제거
-        await roomRef.update({
-          'players':
-              FieldValue.arrayRemove([_authentication.currentUser!.email]),
-        });
-
-        await roomRef
-            .collection('players')
-            .doc(_authentication.currentUser!.email)
-            .delete();
+        // await roomRef.update({
+        //   'players':
+        //       FieldValue.arrayRemove([_authentication.currentUser!.email]),
+        // });
+        //
+        // await roomRef
+        //     .collection('players')
+        //     .doc(_authentication.currentUser!.email)
+        //     .delete();
       }
     }
   }
@@ -192,6 +192,8 @@ class _ChatPageState extends State<ChatPage> {
         print("isReady 상태: ${playerDoc.data()?['isReady']}");
         print("이메일: ${playerDoc.data()?['email']}");
         //디버깅용 문장
+
+
 
         if (!playerDoc['isReady']) {
           allReady = false;
