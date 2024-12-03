@@ -74,7 +74,7 @@ class _SelectorderState extends State<Selectorder> {
   }
 
   void _onRiveInit(Artboard artboard) async {
-    checkIfHost();
+    await checkIfHost();
 
     final controller = StateMachineController.fromArtboard(
       artboard,
