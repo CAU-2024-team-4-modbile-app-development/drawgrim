@@ -7,9 +7,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:convert';
 
-class ViewerPage extends StatelessWidget {
-  const ViewerPage({Key? key}) : super(key: key);
+class ViewerPage extends StatefulWidget {
+  final String roomId;
 
+  const ViewerPage({super.key, required this.roomId});
+
+  @override
+  State<ViewerPage> createState() => _ViewerPageState();
+}
+
+class _ViewerPageState extends State<ViewerPage> {
   void _showGuessDialog(BuildContext context) {
     final TextEditingController guessController = TextEditingController();
     showDialog(
@@ -46,7 +53,6 @@ class ViewerPage extends StatelessWidget {
     // Logic to check the guess and update points
     print("Player guessed: $guess");
   }
-
 
   @override
   Widget build(BuildContext context) {

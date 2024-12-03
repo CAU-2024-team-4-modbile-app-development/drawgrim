@@ -23,6 +23,9 @@ SMIInput<bool>? _isAnimal;
 
 
 class _DecideSubjectState extends State<DecideSubject> {
+
+  bool isHost = false; // 방장 여부
+
   void _onRiveInit(Artboard artboard) async{
     String subject = "";
 
@@ -60,9 +63,9 @@ class _DecideSubjectState extends State<DecideSubject> {
       // }
 
       _isFood?.value = true;
-      subject = "Food";
+      subject = "food";
 
-      await updateSubject(subject);
+      // await updateSubject(subject);
 
       //Food로 고정
     }

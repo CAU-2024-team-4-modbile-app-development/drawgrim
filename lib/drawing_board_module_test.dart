@@ -21,6 +21,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+
   const MyApp({super.key});
 
   @override
@@ -28,13 +29,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Drawing Test',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const DrawingPage(),
+      // home: const DrawingPage(roomId: "1234",),
     );
   }
 }
 
 class DrawingPage extends StatefulWidget {
-  const DrawingPage({super.key});
+  final String roomId;
+
+  const DrawingPage({super.key, required this.roomId});
 
   @override
   State<DrawingPage> createState() => _DrawingPageState();

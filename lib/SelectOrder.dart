@@ -61,7 +61,7 @@ class _SelectorderState extends State<Selectorder> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => DrawingPage()), // Drawer page
+        MaterialPageRoute(builder: (context) => DrawingPage(roomId: widget.roomId,)), // Drawer page
       );
     } else {
       // First user is a viewer
