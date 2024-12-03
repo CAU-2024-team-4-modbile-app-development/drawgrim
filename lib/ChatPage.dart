@@ -54,22 +54,6 @@ class _ChatPageState extends State<ChatPage> {
 
         // 현재 사용자가 방장과 일치하는지 확인
         if (createdBy == _authentication.currentUser?.email) {
-          // 현재 사용자가 방장이라면 Firestore에 사용자 상태 업데이트
-          try {
-            await roomRef
-                .collection('players')
-                .doc(_authentication.currentUser!.email)
-                .set({
-              'username': _authentication.currentUser?.email ?? 'Anonymous',
-              'isOnline': true,
-              'isReady': true,
-              'isHost': true,
-            });
-            print('Player data successfully written to Firestore');
-          } catch (e) {
-            print('Error writing player data to Firestore: $e');
-          }
-          // UI 업데이트
           setState(() {
             isReady = true; // 준비 상태
             isHost = true; // 방장 여부
@@ -86,6 +70,12 @@ class _ChatPageState extends State<ChatPage> {
 
   // 유저의 로그인 상태를 업데이트
   Future<void> updatePresence(bool isOnline) async {
+
+    final roomRef =
+    await FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+
+    final roomSnapshot = await roomRef.get();
+
     if (loggedUser != null) {
       final roomRef =
           FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
@@ -110,15 +100,28 @@ class _ChatPageState extends State<ChatPage> {
           });
         }
 
-        await roomRef
-            .collection('players')
-            .doc(_authentication.currentUser!.email)
-            .set({
-          'username': _authentication.currentUser!.email ?? 'Anonymous',
-          'isOnline': true,
-          'isReady': false, // 준비 상태 초기화
-          'isHost': false,
-        });
+        if(isHost == true){
+          await roomRef
+              .collection('players')
+              .doc(_authentication.currentUser!.email)
+              .set({
+            'username': _authentication.currentUser!.email ?? 'Anonymous',
+            'isOnline': true,
+            'isReady': true, // 준비 상태 초기화
+            'isHost': true,
+          });
+        }else{
+          await roomRef
+              .collection('players')
+              .doc(_authentication.currentUser!.email)
+              .set({
+            'username': _authentication.currentUser!.email ?? 'Anonymous',
+            'isOnline': true,
+            'isReady': false, // 준비 상태 초기화
+            'isHost': false,
+          });
+        }
+
       } else {
         // 오프라인이면 doc의 플레이어 리스트 항목에서 제거
         // await roomRef.update({
@@ -176,12 +179,6 @@ class _ChatPageState extends State<ChatPage> {
       bool allReady = true;
 
       print("업데이트중");
-
-      await roomRef.collection('players').doc(loggedUser!.email).update({
-        'isReady': isReady,
-      });
-
-      //host의 REady상태를 데이터베이스에 true로 업데이트
 
       List<String> emails = playersSnapshot.docs.map((doc) => doc.id).toList();
       //현재 게임 방에 있는 이메일 목록 리스트
