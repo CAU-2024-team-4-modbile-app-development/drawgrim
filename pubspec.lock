@@ -533,6 +533,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  new_drawing_board_package:
+    dependency: "direct main"
+    description:
+      path: "local_packages/new_drawing_board_package"
+      relative: true
+    source: path
+    version: "0.9.5"
   node_preamble:
     dependency: transitive
     description:

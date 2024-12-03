@@ -15,6 +15,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
   final _messageController = TextEditingController();
@@ -205,10 +206,12 @@ class _ChatPageState extends State<ChatPage> {
         });
 
         // 게임 시작
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DecideSubject()),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => DecideSubject(roomId: widget.roomId),
+        //   ),
+        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('모든 플레이어가 준비되어야 게임을 시작할 수 있습니다.')),
@@ -305,7 +308,7 @@ class _ChatPageState extends State<ChatPage> {
               Future.delayed(Duration.zero, () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => DecideSubject()),
+                  MaterialPageRoute(builder: (context) => DecideSubject(roomId: widget.roomId,)),
                 );
               });
             }

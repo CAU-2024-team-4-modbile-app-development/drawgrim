@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'drawing_board_module_test.dart'; // Assuming this is the page for drawing functionality
-import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
+import 'testGuessingPage.dart';
+//import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
 import 'package:rive/rive.dart';
 
 class Selectorder extends StatefulWidget {
-  const Selectorder({super.key});
+  final String roomId;
+
+  const Selectorder({super.key, required this.roomId});
 
   @override
   State<Selectorder> createState() => _SelectorderState();
@@ -58,7 +61,7 @@ class _SelectorderState extends State<Selectorder> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => DrawingPage()), // Drawer page
+        MaterialPageRoute(builder: (context) => DrawingPage(roomId: widget.roomId,)), // Drawer page
       );
     } else {
       // First user is a viewer
@@ -81,7 +84,14 @@ class _SelectorderState extends State<Selectorder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("순서 선택"),
+        title: Text(
+          "순서 정하기",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Center(
         child: Center(

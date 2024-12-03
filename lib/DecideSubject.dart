@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 import 'SelectOrder.dart';
-import 'WordsProvider.dart';
-import 'package:provider/provider.dart';
+import 'Words.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'dart:math';
 
 class DecideSubject extends StatefulWidget {
-  const DecideSubject({super.key});
+  final String roomId;
+
+  const DecideSubject({super.key, required this.roomId});
+
 
   @override
   State<DecideSubject> createState() => _DecideSubjectState();
@@ -17,8 +21,13 @@ SMIInput<bool>? _isFood;
 SMIInput<bool>? _isPlant;
 SMIInput<bool>? _isAnimal;
 
+
 class _DecideSubjectState extends State<DecideSubject> {
+
+  bool isHost = false; // 방장 여부
+
   void _onRiveInit(Artboard artboard) async{
+    String subject = "";
 
     final controller = StateMachineController.fromArtboard(
       artboard,
@@ -37,22 +46,28 @@ class _DecideSubjectState extends State<DecideSubject> {
       _isAnimal?.value = false;
       _isPlant?.value = false;
 
-      final random = Random();
-      final int randomIndex = random.nextInt(3);
+      // final random = Random();
+      // final int randomIndex = random.nextInt(3);
+      //
+      // switch(randomIndex){
+      //   case 0:
+      //     _isFood?.value = true;
+      //
+      //     break;
+      //   case 1:
+      //     _isAnimal?.value = true;
+      //     break;
+      //   case 2:
+      //     _isPlant?.value = true;
+      //     break;
+      // }
 
-      switch(randomIndex){
-        case 0:
-          _isFood?.value = true;
+      _isFood?.value = true;
+      subject = "food";
 
-          break;
-        case 1:
-          _isAnimal?.value = true;
-          break;
-        case 2:
-          _isPlant?.value = true;
-          break;
-      }
-      //provider 작업 추가 필요
+      // await updateSubject(subject);
+
+      //Food로 고정
     }
   }
 
@@ -61,11 +76,25 @@ class _DecideSubjectState extends State<DecideSubject> {
     super.initState();
   }
 
+  Future<void> updateSubject(String subject)async{
+    Words words = Words();
+
+
+    await FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('subject')
+        .add({
+      'subject': subject,
+      'elements': words.returnSubjectList(subject),
+    });
+  }
+
   void _onStateChange(String stateMachineName, String stateName) async {
     if (stateName == 'ExitState') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Selectorder()), // Drawer page
+        MaterialPageRoute(builder: (context) => Selectorder(roomId: widget.roomId,)), // Drawer page
       );
     }
   }
@@ -74,7 +103,14 @@ class _DecideSubjectState extends State<DecideSubject> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("주제 선택"),
+        title: Text(
+          "주제 선택",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true, // 제목 중앙 정렬
       ),
       body: Center(
         child: Center(
