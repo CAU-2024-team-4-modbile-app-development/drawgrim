@@ -74,6 +74,8 @@ class _ChatPageState extends State<ChatPage> {
     await updatePresence(true);
   }
 
+
+
   // 유저의 로그인 상태를 업데이트
   Future<void> updatePresence(bool isOnline) async {
 
