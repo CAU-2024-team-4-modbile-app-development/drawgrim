@@ -69,7 +69,7 @@ class _GameRoomState extends State<GameRoom> {
     } else {
       // 방 이름이 비어있을 경우
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter a room name')),
+        const SnackBar(content: Text('Please enter a room name')),
       );
     }
   }
@@ -134,8 +134,8 @@ class _GameRoomState extends State<GameRoom> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 10.0),
                           child: Center(
                             child: Text(
                               '방 목록',
@@ -189,7 +189,7 @@ class _GameRoomState extends State<GameRoom> {
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text('$playerCount/5', style: TextStyle(fontSize: 16)),
+                                          Text('$playerCount/4', style: TextStyle(fontSize: 16)),
                                           SizedBox(width: 8),
                                           Icon(Icons.person, size: 20),
                                         ],
@@ -217,7 +217,7 @@ class _GameRoomState extends State<GameRoom> {
                       children: [
                         TextField(
                           controller: _roomNameController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Enter Room Name',
                             border: OutlineInputBorder(),
                           ),
@@ -227,10 +227,10 @@ class _GameRoomState extends State<GameRoom> {
                             });
                           },
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: createRoom,
-                          child: Text('Create Room'),
+                          child: const Text('Create Room'),
                         ),
                       ],
                     ),
@@ -242,7 +242,7 @@ class _GameRoomState extends State<GameRoom> {
               top: 16,
               right: 16,
               child: IconButton(
-                icon: Icon(Icons.logout, size: 30, color: Colors.red),
+                icon: const Icon(Icons.logout, size: 30, color: Colors.red),
                 onPressed: logOut,
               ),
             ),
