@@ -47,7 +47,7 @@ class _MyAppState extends State<MyApp> {
       title: 'Flutter Demo',
       theme: ThemeData(
         textTheme: GoogleFonts.gaeguTextTheme(),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF1E1E2F  )),
         useMaterial3: true,
       ),
       home: OpenPage()
