@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 //import 'package:flutter_drawing_board/flutter_drawing_board.dart';
@@ -143,6 +144,26 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     await _uploadImage(data);
   }
 
+  void removePlayerFromGameRoom(String roomId) async {
+    final _authentication = FirebaseAuth.instance;
+
+    try {
+      final roomRef =
+      FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
+
+      await roomRef.update({
+        'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
+      });
+
+      await roomRef
+          .collection('players')
+          .doc(_authentication.currentUser?.email)
+          .delete();
+    } catch (e) {
+      print("Error removing player from room: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,6 +219,10 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
             left: 20,
             child: ElevatedButton(
               onPressed: () {
+                removePlayerFromGameRoom(widget.roomId);
+
+
+
                 Navigator.of(context).pop();
               },
               child: Text('Back'),

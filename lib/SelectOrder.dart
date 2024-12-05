@@ -43,7 +43,7 @@ class _SelectorderState extends State<Selectorder> {
           await roomRef
               .collection('players')
               .doc(_authentication.currentUser!.email)
-              .set({
+              .update({
             'isDrawer': true,
             'isViewer': false,
           });
@@ -59,7 +59,7 @@ class _SelectorderState extends State<Selectorder> {
           await roomRef
               .collection('players')
               .doc(_authentication.currentUser!.email)
-              .set({
+              .update({
             'isDrawer': false,
             'isViewer': true,
           });
