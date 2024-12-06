@@ -205,7 +205,7 @@ class _ViewerPageState extends State<ViewerPage> {
 
               final roles = snapshot.data!;
               final String? drawer = roles['drawer'];
-              final List<String> viewers = roles['viewer'];
+              final List<dynamic> viewers = roles['viewer'];
 
               if (drawer == currentUser?.uid) {
                 Future.microtask(() => Navigator.pushReplacement(
