@@ -52,9 +52,9 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF1E1E2F  )),
         useMaterial3: true,
       ),
-      // home: OpenPage()
+      home: OpenPage()
       // home: Ranking(first: "FIRST", second: "SECOND", third: "THIRD",),
-      home: ViewerPage(roomId: "!234"),
+      // home: ViewerPage(roomId: "!234"),
 
       // StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(), builder:(context,snapshot){
       //   if(snapshot.hasData){

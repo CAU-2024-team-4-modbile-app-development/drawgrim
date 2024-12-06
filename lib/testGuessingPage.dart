@@ -5,11 +5,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'drawing_board_module_test.dart';
 
 import 'NewMessage.dart';
 
 class ViewerPage extends StatefulWidget {
   final String roomId;
+
   const ViewerPage({super.key, required this.roomId});
 
   @override
@@ -17,8 +20,8 @@ class ViewerPage extends StatefulWidget {
 }
 
 class _ViewerPageState extends State<ViewerPage> {
-
-  final _controller = TextEditingController();  //입력 값 받아옴(실시간)
+  final currentUser = FirebaseAuth.instance.currentUser;
+  final _controller = TextEditingController();
 
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
     return FirebaseFirestore.instance
@@ -27,11 +30,34 @@ class _ViewerPageState extends State<ViewerPage> {
         .collection('players')
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
-      return {
-        'username': doc.data()['username'] ?? 'Unknown',
-        'isReady': doc.data()['isReady'] ?? false,
+              return {
+                'username': doc.data()['username'] ?? 'Unknown',
+              };
+            }).toList());
+  }
+
+  Stream<Map<String, dynamic>> getPlayerRoles() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .snapshots()
+        .map((snapshot) {
+      Map<String, dynamic> roles = {
+        'drawer': null, // 현재 그림을 그리는 사용자의 uid
+        'viewer': [],   // 그림을 보고 있는 사용자의 uid 목록
       };
-    }).toList());
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['isDrawer'] == true) {
+          roles['drawer'] = doc.id; // uid는 문서 ID로 가정
+        }
+        if (data['isViewer'] == true) {
+          roles['viewer'].add(doc.id); // uid를 추가
+        }
+      }
+      return roles;
+    });
   }
 
   @override
@@ -62,13 +88,15 @@ class _ViewerPageState extends State<ViewerPage> {
                           .limitToLast(1)
                           .onValue,
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+                        if (!snapshot.hasData ||
+                            snapshot.data?.snapshot.value == null) {
                           return Center(child: CircularProgressIndicator());
                         }
 
                         final data = snapshot.data!.snapshot.value as Map;
                         List<MapEntry> sortedEntries = data.entries.toList()
-                          ..sort((a, b) => b.value['timestamp'].compareTo(a.value['timestamp']));
+                          ..sort((a, b) => b.value['timestamp']
+                              .compareTo(a.value['timestamp']));
 
                         var lastEntry = sortedEntries.first;
                         String base64String = lastEntry.value['image_data'];
@@ -104,10 +132,10 @@ class _ViewerPageState extends State<ViewerPage> {
                 final alignment = i == 0
                     ? Alignment.topLeft
                     : i == 1
-                    ? Alignment.topRight
-                    : i == 2
-                    ? Alignment.bottomLeft
-                    : Alignment.bottomRight;
+                        ? Alignment.topRight
+                        : i == 2
+                            ? Alignment.bottomLeft
+                            : Alignment.bottomRight;
 
                 faceIcons.add(
                   Padding(
@@ -168,14 +196,32 @@ class _ViewerPageState extends State<ViewerPage> {
                 ],
               );
             },
-          )
+          ),
+          StreamBuilder<Map<String, dynamic>>(
+            stream: getPlayerRoles(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
 
+              final roles = snapshot.data!;
+              final String? drawer = roles['drawer'];
+              final List<String> viewers = roles['viewer'];
 
-
+              if (drawer == currentUser?.uid) {
+                Future.microtask(() => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DrawingPage(roomId: widget.roomId),
+                    )));
+              }
+              return(
+              SizedBox.shrink()
+              );
+            },
+          ),
         ],
       ),
     );
   }
 }
-
-
