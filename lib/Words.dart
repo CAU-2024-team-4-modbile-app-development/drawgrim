@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class Words{
+class Words extends ChangeNotifier{
   final List<String> foodList = [
     '라면',
     '김밥',

@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:rive/rive.dart';
 import 'SelectOrder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -43,7 +46,8 @@ class _DecideSubjectState extends State<DecideSubject> {
       final QuerySnapshot subjectSnapshot =
           await roomRef.collection('subject').get();
 
-      final String subject = subjectSnapshot.docs.first['subject'];
+      final DocumentSnapshot doc = subjectSnapshot.docs.first;
+      final String subject = doc['subject'];
 
       switch (subject) {
         case 'food':
@@ -56,6 +60,9 @@ class _DecideSubjectState extends State<DecideSubject> {
           _isPlant?.value = true;
           break;
       }
+
+
+
     }
   }
 

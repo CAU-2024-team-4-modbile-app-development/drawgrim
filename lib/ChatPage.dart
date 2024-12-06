@@ -149,7 +149,7 @@ class _ChatPageState extends State<ChatPage> {
     String subject = '';
 
     final random = Random();
-    final int randomIndex = random.nextInt(3);
+    int randomIndex = random.nextInt(3);
 
     switch (randomIndex) {
       case 0:
@@ -181,6 +181,32 @@ class _ChatPageState extends State<ChatPage> {
       'elements': words.returnSubjectList(subject),
       'answer': '',
     });
+
+    final roomRef =
+    FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+    final QuerySnapshot subjectSnapshot =
+    await roomRef.collection('subject').get();
+
+    final DocumentSnapshot doc = subjectSnapshot.docs.first;
+    final elements = doc['elements'];
+
+    randomIndex = random.nextInt(elements.length);
+    final String selectedElement = elements[randomIndex];
+    print(selectedElement);
+
+    elements.removeAt(randomIndex);
+
+    await roomRef.collection('subject').doc(doc.id).update({
+      'elements': elements,
+      'answer': selectedElement,
+    });
+
+
+
+
+
+
+
   }
 
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
