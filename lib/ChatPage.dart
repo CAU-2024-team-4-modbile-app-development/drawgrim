@@ -182,24 +182,24 @@ class _ChatPageState extends State<ChatPage> {
       'answer': '',
     });
 
-    final roomRef =
-    FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-    final QuerySnapshot subjectSnapshot =
-    await roomRef.collection('subject').get();
-
-    final DocumentSnapshot doc = subjectSnapshot.docs.first;
-    final elements = doc['elements'];
-
-    randomIndex = random.nextInt(elements.length);
-    final String selectedElement = elements[randomIndex];
-    print(selectedElement);
-
-    elements.removeAt(randomIndex);
-
-    await roomRef.collection('subject').doc(doc.id).update({
-      'elements': elements,
-      'answer': selectedElement,
-    });
+    // final roomRef =
+    // FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+    // final QuerySnapshot subjectSnapshot =
+    // await roomRef.collection('subject').get();
+    //
+    // final DocumentSnapshot doc = subjectSnapshot.docs.first;
+    // final elements = doc['elements'];
+    //
+    // randomIndex = random.nextInt(elements.length);
+    // final String selectedElement = elements[randomIndex];
+    // print(selectedElement);
+    //
+    // elements.removeAt(randomIndex);
+    //
+    // await roomRef.collection('subject').doc(doc.id).update({
+    //   'elements': elements,
+    //   'answer': selectedElement,
+    // });
 
 
 
