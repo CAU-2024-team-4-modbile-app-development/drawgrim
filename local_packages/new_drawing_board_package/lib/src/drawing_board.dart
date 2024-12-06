@@ -94,35 +94,6 @@ class DrawingBoard extends StatefulWidget {
   final TransformationController? transformationController;
   final AlignmentGeometry alignment;
 
-
-  static List<DefToolItem> mediumTools(
-      Type currType, DrawingController controller) {
-    return <DefToolItem>[
-
-      DefToolItem(
-          isActive: currType == SimpleLine,
-          icon: Icons.edit,
-          onTap: () => controller.setPaintContent(SimpleLine())),
-      DefToolItem(
-          isActive: currType == SmoothLine,
-          icon: Icons.brush,
-          onTap: () => controller.setPaintContent(SmoothLine())),
-      DefToolItem(
-          isActive: currType == StraightLine,
-          icon: Icons.show_chart,
-          onTap: () => controller.setPaintContent(StraightLine())),
-
-      DefToolItem(
-          isActive: currType == Eraser,
-          icon: CupertinoIcons.bandage,
-          onTap: () => controller.setPaintContent(Eraser())),
-    ];
-  }
-
-  static Widget buildDefaultActions(DrawingController controller) {
-    return _DrawingBoardState.buildDefaultActions(controller);
-  }
-
   static List<DefToolItem> defaultTools(
       Type currType, DrawingController controller) {
     return <DefToolItem>[
@@ -148,10 +119,58 @@ class DrawingBoard extends StatefulWidget {
     ];
   }
 
-  static Widget buildMediumActions(DrawingController controller) {
-    return _DrawingBoardState.buildMediumActions(controller);
+  static List<DefToolItem> mediumTools(
+      Type currType, DrawingController controller) {
+    return <DefToolItem>[
+
+      DefToolItem(
+          isActive: currType == SimpleLine,
+          icon: Icons.edit,
+          onTap: () => controller.setPaintContent(SimpleLine())),
+      DefToolItem(
+          isActive: currType == SmoothLine,
+          icon: Icons.brush,
+          onTap: () => controller.setPaintContent(SmoothLine())),
+      DefToolItem(
+          isActive: currType == StraightLine,
+          icon: Icons.show_chart,
+          onTap: () => controller.setPaintContent(StraightLine())),
+
+      DefToolItem(
+          isActive: currType == Eraser,
+          icon: CupertinoIcons.bandage,
+          onTap: () => controller.setPaintContent(Eraser())),
+    ];
   }
 
+  static List<DefToolItem> hardTools(
+      Type currType, DrawingController controller) {
+    return <DefToolItem>[
+
+      DefToolItem(
+          isActive: currType == SimpleLine,
+          icon: Icons.edit,
+          onTap: () => controller.setPaintContent(SimpleLine())),
+      DefToolItem(
+          isActive: currType == SmoothLine,
+          icon: Icons.brush,
+          onTap: () => controller.setPaintContent(SmoothLine())),
+      DefToolItem(
+          isActive: currType == StraightLine,
+          icon: Icons.show_chart,
+          onTap: () => controller.setPaintContent(StraightLine())),
+
+      DefToolItem(
+          isActive: currType == Eraser,
+          icon: CupertinoIcons.bandage,
+          onTap: () => controller.setPaintContent(Eraser())),
+    ];
+  }
+
+
+  static Widget buildDefaultActions(DrawingController controller) {
+    return _DrawingBoardState.buildDefaultActions(controller);
+  }
   static Widget buildDefaultTools(DrawingController controller,
       {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
     return _DrawingBoardState.buildDefaultTools(controller,
@@ -159,12 +178,27 @@ class DrawingBoard extends StatefulWidget {
   }
 
 
+  static Widget buildMediumActions(DrawingController controller) {
+    return _DrawingBoardState.buildMediumActions(controller);
+  }
+
 
   static Widget buildMediumTools(DrawingController controller,
       {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
     return _DrawingBoardState.buildMediumTools(controller,
         defaultToolsBuilder: defaultToolsBuilder, axis: axis);
   }
+
+  static Widget buildHardActions(DrawingController controller) {
+    return _DrawingBoardState.buildHardActions(controller);
+  }
+
+  static Widget buildHardTools(DrawingController controller,
+      {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
+    return _DrawingBoardState.buildHardTools(controller,
+        defaultToolsBuilder: defaultToolsBuilder, axis: axis);
+  }
+
 
   @override
   State<DrawingBoard> createState() => _DrawingBoardState();
@@ -208,7 +242,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
           Expanded(child: content),
           if (widget.showDefaultActions) buildDefaultActions(_controller),
           if (widget.showDefaultTools)
-            buildMediumTools(_controller,
+            buildDefaultTools(_controller,
                 defaultToolsBuilder: widget.defaultToolsBuilder),
         ],
       );
@@ -381,6 +415,54 @@ class _DrawingBoardState extends State<DrawingBoard> {
     );
   }
 
+  static Widget buildHardActions(DrawingController controller) {
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+            valueListenable: controller.drawConfig,
+            builder: (_, DrawConfig dc, ___) {
+              return Row(
+                children: <Widget>[
+                  SizedBox(
+                    height: 24,
+                    width: 160,
+                    child: Slider(
+                      value: dc.strokeWidth,
+                      max: 50,
+                      min: 1,
+                      onChanged: (double v) =>
+                          controller.setStyle(strokeWidth: v),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      CupertinoIcons.arrow_turn_up_left,
+                      color: controller.canUndo() ? null : Colors.grey,
+                    ),
+                    onPressed: () => controller.undo(),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      CupertinoIcons.arrow_turn_up_right,
+                      color: controller.canRedo() ? null : Colors.grey,
+                    ),
+                    onPressed: () => controller.redo(),
+                  ),
+
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.trash),
+                    onPressed: () => controller.clear(),
+                  ),
+                ],
+              );
+            }),
+      ),
+    );
+  }
+
   static Widget buildDefaultTools(
     DrawingController controller, {
     DefaultToolsBuilder? defaultToolsBuilder,
@@ -450,6 +532,38 @@ class _DrawingBoardState extends State<DrawingBoard> {
     );
   }
 
+  static Widget buildHardTools(
+      DrawingController controller, {
+        DefaultToolsBuilder? defaultToolsBuilder,
+        Axis axis = Axis.horizontal,
+      }) {
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: axis,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+          valueListenable: controller.drawConfig,
+          shouldRebuild: (DrawConfig p, DrawConfig n) =>
+          p.contentType != n.contentType,
+          builder: (_, DrawConfig dc, ___) {
+            final Type currType = dc.contentType;
+
+            final List<Widget> children =
+            (defaultToolsBuilder?.call(currType, controller) ??
+                DrawingBoard.hardTools(currType, controller))
+                .map((DefToolItem item) => _DefToolItemWidget(item: item))
+                .toList();
+
+            return axis == Axis.horizontal
+                ? Row(children: children)
+                : Column(children: children);
+          },
+        ),
+
+      ),
+    );
+  }
 
 
 }
