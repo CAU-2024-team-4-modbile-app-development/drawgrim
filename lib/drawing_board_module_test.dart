@@ -128,6 +128,22 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     print("Uploaded Image and cleaned up old entries.");
   }
 
+  Stream<List<Map<String, dynamic>>> getPlayerInfo() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .where('isViewer', isEqualTo: true) // Only fetch players where isViewer is true
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      return {
+        'username': doc.data()['username'] ?? 'Unknown',
+        'score': doc.data()['score'] ?? 0,
+      };
+    }).toList());
+  }
+
+
 
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
@@ -169,63 +185,139 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey,
-      body: Stack(
-        children: <Widget>[
-          // Main content
-          Column(
-            children: <Widget>[
-              // Prompt Word
-              SizedBox(height: 25),
-              Text(
-                promptWord,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Transform.translate(
-                offset: isTimeLow ? Offset(5 * (0.5 - _timerController.value), 0) : Offset(0, 0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * (timeWidth / first_timeWidth),
-                  height: 3,
-                  color: timeColor,
-                ),
-              ),
-              SizedBox(height: 10),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    return DrawingBoard(
-                      boardPanEnabled: false,
-                      boardScaleEnabled: false,
-                      transformationController: _transformationController,
-                      controller: _drawingController,
-                      background: Container(
-                        width: constraints.maxWidth,
-                        height: constraints.maxHeight,
-                        color: Colors.white,
+      body: Row(
+        children: [
+          // Drawing area
+          Expanded(
+            child: Stack(
+              children: <Widget>[
+                // Main content
+                Column(
+                  children: <Widget>[
+                    // Prompt Word
+                    SizedBox(height: 25),
+                    Text(
+                      promptWord,
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Transform.translate(
+                      offset: isTimeLow
+                          ? Offset(5 * (0.5 - _timerController.value), 0)
+                          : Offset(0, 0),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width *
+                            (timeWidth / first_timeWidth),
+                        height: 3,
+                        color: timeColor,
                       ),
-                      showDefaultActions: true,
-                      showDefaultTools: true,
-                    );
-                    //DRAWING BOARD
-                  },
+                    ),
+                    SizedBox(height: 10),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (BuildContext context,
+                            BoxConstraints constraints) {
+                          return DrawingBoard(
+                            boardPanEnabled: false,
+                            boardScaleEnabled: false,
+                            transformationController:
+                            _transformationController,
+                            controller: _drawingController,
+                            background: Container(
+                              width: constraints.maxWidth,
+                              height: constraints.maxHeight,
+                              color: Colors.white,
+                            ),
+                            showDefaultActions: true,
+                            showDefaultTools: true,
+                          );
+                          // DRAWING BOARD
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
 
-            ],
+                // Positioned 'Back' button at top-left
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      removePlayerFromGameRoom(widget.roomId);
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Back'),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // Positioned 'Back' button at top-left
-          Positioned(
-            top: 20,
-            left: 20,
-            child: ElevatedButton(
-              onPressed: () {
-                removePlayerFromGameRoom(widget.roomId);
+          // Player information column
+          Container(
+            width: 200, // Adjust width as needed
+            color: Colors.white,
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: getPlayerInfo(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No players yet',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  );
+                }
 
+                final players = snapshot.data!;
 
-                Navigator.of(context).pop();
+                return ListView.builder(
+                  itemCount: players.length,
+                  itemBuilder: (context, index) {
+                    final player = players[index];
+                    final username = player['username'];
+                    // Placeholder score; replace with actual score data if available
+                    final score = player['score'] ?? 0;
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          // Emoji face
+                          Icon(
+                            Icons.face,
+                            size: 50,
+                            color: Colors.blue,
+                          ),
+                          SizedBox(width: 8),
+                          // Player info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  username,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Score: $score',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },
-              child: Text('Back'),
             ),
           ),
         ],
