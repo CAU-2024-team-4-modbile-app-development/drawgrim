@@ -210,7 +210,7 @@ class _ViewerPageState extends State<ViewerPage> {
               if (drawer == currentUser?.uid) {
                 Future.microtask(() => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
+                    MaterialPage  Route(
                       builder: (context) => DrawingPage(roomId: widget.roomId),
                     )));
               }

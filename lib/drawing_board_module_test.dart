@@ -127,6 +127,8 @@ class _DrawingPageState extends State<DrawingPage>
     _timer!.cancel(); // Timer 중지
     _timer = null; // Timer 객체 제거
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     final CollectionReference playersRef = FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
@@ -135,18 +137,18 @@ class _DrawingPageState extends State<DrawingPage>
     final QuerySnapshot querySnapshot =
         await playersRef.orderBy(FieldPath.documentId).get();
 
+    print("CURRENTUSER: ${currentUser?.email}");
+
+    await playersRef.doc(currentUser?.email).update({
+      'isDrawer': false,
+      'isViewer': true,
+    });
+
     for (var doc in querySnapshot.docs) {
-      print("호출 횟수!");
+      print("USER ID: ${doc.id}");
       final data = doc.data() as Map<String, dynamic>;
-      if (data['isDrawer'] == true) {
-        print("나는 방장이다");
-        await playersRef.doc(doc.id).update({
-          'isDrawer': false,
-          'isViewer': true,
-        });
-        break;
-      }
-      else if (data['isDrawer'] == false) {
+      if (doc.id == currentUser?.email) {
+      } else {
         await playersRef.doc(doc.id).update({
           'isDrawer': true,
           'isViewer': false,
@@ -154,11 +156,10 @@ class _DrawingPageState extends State<DrawingPage>
         break;
       }
     }
-
-    // Navigator.pushReplacement(
-    //     context,
-    //     MaterialPageRoute(
-    //         builder: (context) => ViewerPage(roomId: widget.roomId)));
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ViewerPage(roomId: widget.roomId)));
   }
 
   @override
