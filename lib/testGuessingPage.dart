@@ -8,7 +8,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'drawing_board_module_test.dart';
 
-
 class ViewerPage extends StatefulWidget {
   final String roomId;
 
@@ -44,11 +43,12 @@ class _ViewerPageState extends State<ViewerPage> {
         .map((snapshot) {
       Map<String, dynamic> roles = {
         'drawer': null, // 현재 그림을 그리는 사용자의 uid
-        'viewer': [],   // 그림을 보고 있는 사용자의 uid 목록
+        'viewer': [], // 그림을 보고 있는 사용자의 uid 목록
       };
       for (var doc in snapshot.docs) {
         final data = doc.data();
         if (data['isDrawer'] == true) {
+          print("DRAWER: ${doc.id}");
           roles['drawer'] = doc.id; // uid는 문서 ID로 가정
         }
         if (data['isViewer'] == true) {
@@ -204,19 +204,22 @@ class _ViewerPageState extends State<ViewerPage> {
               }
 
               final roles = snapshot.data!;
-              final String? drawer = roles['drawer'];
+              String? drawer = roles['drawer'];
               final List<dynamic> viewers = roles['viewer'];
 
               if (drawer == currentUser?.uid) {
-                Future.microtask(() => Navigator.pushReplacement(
+                // Navigator 호출을 Future.microtask 안에서 실행
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPage  Route(
+                    MaterialPageRoute(
                       builder: (context) => DrawingPage(roomId: widget.roomId),
-                    )));
+                    ),
+                  );
+                });
               }
-              return(
-              SizedBox.shrink()
-              );
+
+              return SizedBox.shrink();
             },
           ),
         ],
@@ -236,47 +239,47 @@ class NewMessage extends StatefulWidget {
 class _NewMessageState extends State<NewMessage> {
   final _controler = TextEditingController();
   String newMessage = '';
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _controler,
-                decoration: const InputDecoration(
-                  labelText: 'New Message',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    newMessage = value;
-                  });
-                },
-              ),
-            )),
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            controller: _controler,
+            decoration: const InputDecoration(
+              labelText: 'New Message',
+            ),
+            onChanged: (value) {
+              setState(() {
+                newMessage = value;
+              });
+            },
+          ),
+        )),
         IconButton(
           color: Colors.deepOrange,
           onPressed: newMessage.trim().isEmpty
               ? null
               : () async {
-            final roomRef =
-            FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
-            final QuerySnapshot subjectSnapshot =
-            await roomRef.collection('subject').get();
+                  final roomRef = FirebaseFirestore.instance
+                      .collection('gameRooms')
+                      .doc(widget.roomId);
+                  final QuerySnapshot subjectSnapshot =
+                      await roomRef.collection('subject').get();
 
-            final DocumentSnapshot doc = subjectSnapshot.docs.first;
-            String answer = doc['answer'];
+                  final DocumentSnapshot doc = subjectSnapshot.docs.first;
+                  String answer = doc['answer'];
 
-            if(newMessage == answer){
+                  if (newMessage == answer) {} // 수정 필요
+                  _controler.clear();
 
-            }// 수정 필요
-                _controler.clear();
-
-                setState(() {
-                  newMessage = '';
-                });
-          },
+                  setState(() {
+                    newMessage = '';
+                  });
+                },
           icon: Icon(Icons.send),
         )
       ],
