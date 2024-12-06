@@ -61,7 +61,19 @@ class _DecideSubjectState extends State<DecideSubject> {
           break;
       }
 
+      List<String> elements = doc['elements'];
 
+        final random = Random();
+        final randomIndex = random.nextInt(elements.length);
+        final String selectedElement = elements[randomIndex];
+        print(selectedElement);
+
+        elements.removeAt(randomIndex);
+
+        await roomRef.collection('subject').doc(doc.id).update({
+          'elements': elements,
+          'answer': selectedElement,
+        });
 
     }
   }
