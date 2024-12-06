@@ -179,6 +179,7 @@ class _ChatPageState extends State<ChatPage> {
         .add({
       'subject': subject,
       'elements': words.returnSubjectList(subject),
+      'answer': '',
     });
   }
 

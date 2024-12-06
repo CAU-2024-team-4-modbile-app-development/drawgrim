@@ -46,6 +46,7 @@ class _SelectorderState extends State<Selectorder> {
               .update({
             'isDrawer': true,
             'isViewer': false,
+            'score': 0,
           });
         } catch (e) {
           print('$e');
@@ -62,6 +63,7 @@ class _SelectorderState extends State<Selectorder> {
               .update({
             'isDrawer': false,
             'isViewer': true,
+            'score': 0,
           });
         } catch (e) {
           print('$e');
