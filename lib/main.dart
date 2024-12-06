@@ -5,6 +5,8 @@ import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import 'testGuessingPage.dart';
+
 import 'Ranking.dart';
 
 AudioPlayer _audioPlayer = AudioPlayer();
@@ -52,6 +54,7 @@ class _MyAppState extends State<MyApp> {
       ),
       home: OpenPage()
       // home: Ranking(first: "FIRST", second: "SECOND", third: "THIRD",),
+      // home: ViewerPage(roomId: "!234"),
 
       // StreamBuilder(stream: FirebaseAuth.instance.authStateChanges(), builder:(context,snapshot){
       //   if(snapshot.hasData){

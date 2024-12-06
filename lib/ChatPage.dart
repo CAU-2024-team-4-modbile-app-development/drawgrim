@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:drawgrim/DecideSubject.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_chat_bubble/chat_bubble.dart';
+import 'NewMessage.dart';
+import 'ChatElement.dart';
 import 'Words.dart';
-
 
 class ChatPage extends StatefulWidget {
   final String roomId; // 채팅방 ID
@@ -74,6 +74,8 @@ class _ChatPageState extends State<ChatPage> {
 
     await updatePresence(true);
   }
+
+
 
   // 유저의 로그인 상태를 업데이트
   Future<void> updatePresence(bool isOnline) async {
@@ -147,7 +149,7 @@ class _ChatPageState extends State<ChatPage> {
     String subject = '';
 
     final random = Random();
-    final int randomIndex = random.nextInt(3);
+    int randomIndex = random.nextInt(3);
 
     switch (randomIndex) {
       case 0:
@@ -177,7 +179,34 @@ class _ChatPageState extends State<ChatPage> {
         .add({
       'subject': subject,
       'elements': words.returnSubjectList(subject),
+      'answer': '',
     });
+
+    final roomRef =
+    FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+    final QuerySnapshot subjectSnapshot =
+    await roomRef.collection('subject').get();
+
+    final DocumentSnapshot doc = subjectSnapshot.docs.first;
+    final elements = doc['elements'];
+
+    randomIndex = random.nextInt(elements.length);
+    final String selectedElement = elements[randomIndex];
+    print(selectedElement);
+
+    elements.removeAt(randomIndex);
+
+    await roomRef.collection('subject').doc(doc.id).update({
+      'elements': elements,
+      'answer': selectedElement,
+    });
+
+
+
+
+
+
+
   }
 
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
@@ -578,150 +607,6 @@ class _ChatPageState extends State<ChatPage> {
 
 }
 
-class ChatElement extends StatelessWidget {
-  const ChatElement({super.key,this.isMe,this.userName,this.text});
-  final bool? isMe;
-  final String? userName;
-  final String? text;
 
-  @override
-  Widget build(BuildContext context) {
-    if(isMe!){
-      return   Padding(
-        padding: const EdgeInsets.only(right:16.0),
-        child: ChatBubble(
-          clipper: ChatBubbleClipper3(type: BubbleType.sendBubble),
-          alignment: Alignment.topRight,
-          margin: EdgeInsets.only(top: 20),
-          backGroundColor:  Colors.blueAccent,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.7,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  userName!,
-                  style: const TextStyle(
-                    color:  Colors.white,
-                    fontWeight: FontWeight.bold,
-                      fontSize: 30
-                  ),
-                ),
-                Text(
-                  text!,
-                  style: TextStyle(color: Colors.white,fontSize: 30),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    else {
-      return Padding(
-        padding: const EdgeInsets.only(left: 16.0),
-        child: ChatBubble(
-          clipper: ChatBubbleClipper3(type: BubbleType.receiverBubble),
-          backGroundColor: Color(0xffE7E7ED),
-          margin: EdgeInsets.only(top: 20),
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.7,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userName!,
-                  style: const TextStyle(
-                    color:  Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 30
-                  ),
-                ),
-                Text(
-                  text!,
-                  style: TextStyle(color: Colors.black,fontSize: 30),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-  }
-}
 
-class NewMessage extends StatefulWidget {
-  final String roomId; // 채팅방 ID
-  const NewMessage({super.key, required this.roomId});
 
-  @override
-  State<NewMessage> createState() => _NewMessageState();
-}
-
-class _NewMessageState extends State<NewMessage> {
-  final _controler = TextEditingController();
-  String newMessage = '';
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _controler,
-                decoration: const InputDecoration(
-                  labelText: 'New Message',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    newMessage = value;
-                  });
-                },
-              ),
-            )),
-        IconButton(
-          color: Colors.deepOrange,
-          onPressed: newMessage.trim().isEmpty
-              ? null
-              : () async {
-            final currentUser = FirebaseAuth.instance.currentUser;
-            if (currentUser != null) {
-              final currentUserInfo = await FirebaseFirestore.instance
-                  .collection('user')
-                  .doc(currentUser.uid)
-                  .get();
-
-              if (currentUserInfo.exists) {
-                FirebaseFirestore.instance
-                    .collection('gameRooms')
-                    .doc(widget.roomId) // roomId 기반 저장
-                    .collection('chat')
-                    .add({
-                  'text': newMessage,
-                  'userName': currentUserInfo.data()!['userName'],
-                  'timestamp': Timestamp.now(),
-                  'uid': currentUser.uid,
-                });
-//dd
-                _controler.clear();
-
-                setState(() {
-                  newMessage = '';
-                });
-              }
-            }
-          },
-          icon: Icon(Icons.send),
-        )
-      ],
-    );
-  }
-}

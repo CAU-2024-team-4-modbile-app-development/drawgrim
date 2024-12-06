@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
+// import 'guessingPage.dart'; // Assuming this is the page for viewing the drawing
 import 'package:rive/rive.dart';
 import 'drawing_board_module_test.dart';
+import 'testGuessingPage.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,9 +44,10 @@ class _SelectorderState extends State<Selectorder> {
           await roomRef
               .collection('players')
               .doc(_authentication.currentUser!.email)
-              .set({
+              .update({
             'isDrawer': true,
             'isViewer': false,
+            'score': 0,
           });
         } catch (e) {
           print('$e');
@@ -59,9 +61,10 @@ class _SelectorderState extends State<Selectorder> {
           await roomRef
               .collection('players')
               .doc(_authentication.currentUser!.email)
-              .set({
+              .update({
             'isDrawer': false,
             'isViewer': true,
+            'score': 0,
           });
         } catch (e) {
           print('$e');
