@@ -8,7 +8,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'drawing_board_module_test.dart';
 
-import 'NewMessage.dart';
 
 class ViewerPage extends StatefulWidget {
   final String roomId;
@@ -222,6 +221,65 @@ class _ViewerPageState extends State<ViewerPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class NewMessage extends StatefulWidget {
+  final String roomId; // 채팅방 ID
+  const NewMessage({super.key, required this.roomId});
+
+  @override
+  State<NewMessage> createState() => _NewMessageState();
+}
+
+class _NewMessageState extends State<NewMessage> {
+  final _controler = TextEditingController();
+  String newMessage = '';
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _controler,
+                decoration: const InputDecoration(
+                  labelText: 'New Message',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    newMessage = value;
+                  });
+                },
+              ),
+            )),
+        IconButton(
+          color: Colors.deepOrange,
+          onPressed: newMessage.trim().isEmpty
+              ? null
+              : () async {
+            final roomRef =
+            FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+            final QuerySnapshot subjectSnapshot =
+            await roomRef.collection('subject').get();
+
+            final DocumentSnapshot doc = subjectSnapshot.docs.first;
+            String answer = doc['answer'];
+
+            if(newMessage == answer){
+
+            }// 수정 필요
+                _controler.clear();
+
+                setState(() {
+                  newMessage = '';
+                });
+          },
+          icon: Icon(Icons.send),
+        )
+      ],
     );
   }
 }
