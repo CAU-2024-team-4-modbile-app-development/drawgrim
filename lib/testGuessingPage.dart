@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 
+import 'NewMessage.dart';
+
 class ViewerPage extends StatefulWidget {
   final String roomId;
   const ViewerPage({super.key, required this.roomId});
@@ -25,15 +27,9 @@ class _ViewerPageState extends State<ViewerPage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("정답: "),
+            Text("정답입력: "),
             Expanded(
-              child: TextField(
-                keyboardType: TextInputType.text,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-                controller: _controller,
-              ),
+              child: NewMessage(roomId: widget.roomId),
             ),
           ],
         ),
