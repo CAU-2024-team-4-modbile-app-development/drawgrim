@@ -27,6 +27,7 @@ class DrawingBoard extends StatefulWidget {
     super.key,
     required this.background,
     this.controller,
+    this.difficultyOption = 0,
     this.showDefaultActions = false,
     this.showDefaultTools = false,
     this.onPointerDown,
@@ -94,6 +95,9 @@ class DrawingBoard extends StatefulWidget {
   final TransformationController? transformationController;
   final AlignmentGeometry alignment;
 
+
+  final dynamic difficultyOption;
+
   static List<DefToolItem> defaultTools(
       Type currType, DrawingController controller) {
     return <DefToolItem>[
@@ -109,8 +113,14 @@ class DrawingBoard extends StatefulWidget {
           isActive: currType == StraightLine,
           icon: Icons.show_chart,
           onTap: () => controller.setPaintContent(StraightLine())),
-
-
+      DefToolItem(
+          isActive: currType == Circle,
+          icon: CupertinoIcons.circle,
+          onTap: () => controller.setPaintContent(Circle())),
+      DefToolItem(
+          isActive: currType == Rectangle,
+          icon: CupertinoIcons.stop,
+          onTap: () => controller.setPaintContent(Rectangle())),
       DefToolItem(
           isActive: currType == Eraser,
 
@@ -135,6 +145,10 @@ class DrawingBoard extends StatefulWidget {
           isActive: currType == StraightLine,
           icon: Icons.show_chart,
           onTap: () => controller.setPaintContent(StraightLine())),
+      DefToolItem(
+          isActive: currType == Circle,
+          icon: CupertinoIcons.circle,
+          onTap: () => controller.setPaintContent(Circle())),
 
       DefToolItem(
           isActive: currType == Eraser,
@@ -236,17 +250,23 @@ class _DrawingBoardState extends State<DrawingBoard> {
       child: Align(alignment: widget.alignment, child: _buildBoard),
     );
 
-    if (widget.showDefaultActions || widget.showDefaultTools) {
+
       content = Column(
         children: <Widget>[
           Expanded(child: content),
-          if (widget.showDefaultActions) buildDefaultActions(_controller),
-          if (widget.showDefaultTools)
-            buildDefaultTools(_controller,
-                defaultToolsBuilder: widget.defaultToolsBuilder),
+          if (widget.difficultyOption == 0) buildDefaultActions(_controller),
+          if (widget.difficultyOption == 0) buildDefaultTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
+
+          if (widget.difficultyOption == 1) buildMediumActions(_controller),
+          if (widget.difficultyOption == 1) buildMediumTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
+
+
+          if (widget.difficultyOption == 2) buildHardActions(_controller),
+          if (widget.difficultyOption == 2) buildHardTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder)
+
         ],
       );
-    }
+
 
     return Listener(
       onPointerDown: (PointerDownEvent pde) =>
@@ -396,13 +416,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
                     ),
                     onPressed: () => controller.undo(),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.arrow_turn_up_right,
-                      color: controller.canRedo() ? null : Colors.grey,
-                    ),
-                    onPressed: () => controller.redo(),
-                  ),
+
 
                   IconButton(
                     icon: const Icon(CupertinoIcons.trash),
