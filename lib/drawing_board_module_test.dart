@@ -299,8 +299,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                               height: constraints.maxHeight,
                               color: Colors.white,
                             ),
-                            showDefaultActions: true,
-                            showDefaultTools: true,
+                            difficultyOption: 0,
                           );
                           // DRAWING BOARD
                         },

@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'drawing_controller.dart';
@@ -96,7 +96,7 @@ class DrawingBoard extends StatefulWidget {
   final AlignmentGeometry alignment;
 
 
-  final dynamic difficultyOption;
+  final int difficultyOption;
 
   static List<DefToolItem> defaultTools(
       Type currType, DrawingController controller) {
@@ -254,7 +254,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
       content = Column(
         children: <Widget>[
           Expanded(child: content),
-          if (widget.difficultyOption == 0) buildDefaultActions(_controller),
+          if (widget.difficultyOption == 0) buildDefaultActions(_controller,context),
           if (widget.difficultyOption == 0) buildDefaultTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
 
           if (widget.difficultyOption == 1) buildMediumActions(_controller),
@@ -338,51 +338,129 @@ class _DrawingBoardState extends State<DrawingBoard> {
     );
   }
 
+  static void _showColorPicker(
+      BuildContext context, DrawingController controller) {
+    double r = 255, g = 0, b = 0;
 
-  static Widget buildDefaultActions(DrawingController controller) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Choose Color"),
+          content: StatefulBuilder(
+            builder: (BuildContext context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildColorSlider("Red", r, (value) {
+                    setState(() => r = value);
+                  }, Colors.red),
+                  _buildColorSlider("Green", g, (value) {
+                    setState(() => g = value);
+                  }, Colors.green),
+                  _buildColorSlider("Blue", b, (value) {
+                    setState(() => b = value);
+                  }, Colors.blue),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 100,
+                    height: 50,
+                    color: Color.fromRGBO(r.toInt(), g.toInt(), b.toInt(), 1.0),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                controller.setStyle(
+                  color: Color.fromRGBO(r.toInt(), g.toInt(), b.toInt(), 1.0),
+                );
+                Navigator.of(context).pop();
+              },
+              child: const Text("Apply"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Widget _buildColorSlider(
+      String label, double value, ValueChanged<double> onChanged, Color activeColor) {
+    return Row(
+      children: [
+        Text(label),
+        Expanded(
+          child: Slider(
+            value: value,
+            min: 0,
+            max: 255,
+            divisions: 255,
+            label: value.toInt().toString(),
+            activeColor: activeColor,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static Widget buildDefaultActions(
+      DrawingController controller, BuildContext context) {
     return Material(
       color: Colors.white,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         child: ExValueBuilder<DrawConfig>(
-            valueListenable: controller.drawConfig,
-            builder: (_, DrawConfig dc, ___) {
-              return Row(
-                children: <Widget>[
-                  SizedBox(
-                    height: 24,
-                    width: 160,
-                    child: Slider(
-                      value: dc.strokeWidth,
-                      max: 50,
-                      min: 1,
-                      onChanged: (double v) =>
-                          controller.setStyle(strokeWidth: v),
-                    ),
+          valueListenable: controller.drawConfig,
+          builder: (_, DrawConfig dc, ___) {
+            return Row(
+              children: <Widget>[
+                SizedBox(
+                  height: 24,
+                  width: 160,
+                  child: Slider(
+                    value: dc.strokeWidth,
+                    max: 50,
+                    min: 1,
+                    onChanged: (double v) =>
+                        controller.setStyle(strokeWidth: v),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.arrow_turn_up_left,
-                      color: controller.canUndo() ? null : Colors.grey,
-                    ),
-                    onPressed: () => controller.undo(),
+                ),
+                PopupMenuButton<void>(
+                  icon: const Icon(Icons.color_lens),
+                  onSelected: (_) => _showColorPicker(context, controller),
+                  itemBuilder: (_) => [],
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_turn_up_left,
+                    color: controller.canUndo() ? null : Colors.grey,
                   ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.arrow_turn_up_right,
-                      color: controller.canRedo() ? null : Colors.grey,
-                    ),
-                    onPressed: () => controller.redo(),
+                  onPressed: () => controller.undo(),
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_turn_up_right,
+                    color: controller.canRedo() ? null : Colors.grey,
                   ),
-
-                  IconButton(
-                    icon: const Icon(CupertinoIcons.trash),
-                    onPressed: () => controller.clear(),
-                  ),
-                ],
-              );
-            }),
+                  onPressed: () => controller.redo(),
+                ),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.trash),
+                  onPressed: () => controller.clear(),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
