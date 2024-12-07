@@ -309,6 +309,26 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                     ),
                     SizedBox(height: 10),
                     Expanded(
+                      child: LayoutBuilder(
+                        builder: (BuildContext context,
+                            BoxConstraints constraints) {
+                          return DrawingBoard(
+                            boardPanEnabled: false,
+                            boardScaleEnabled: false,
+                            transformationController:
+                            _transformationController,
+                            controller: _drawingController,
+                            background: Container(
+                              width: constraints.maxWidth,
+                              height: constraints.maxHeight,
+                              color: Colors.white,
+                            ),
+                            difficultyOption: 0,
+                          );
+                          // DRAWING BOARD
+                        },
+                      ),
+                      /*
                       child: StreamBuilder<Map<String, dynamic>>(
                         stream: getDrawerPlayerInfo(),
                         builder: (context, snapshot) {
@@ -347,7 +367,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                             },
                           );
                         },
-                      ),
+                      ),*/
                     ),
                   ],
                 ),
