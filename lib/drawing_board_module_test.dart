@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:new_drawing_board_package/new_drawing_board.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:flutter_drawing_board/flutter_drawing_board.dart'
+
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:convert'; //데이터 base64로 변환
 
@@ -20,11 +20,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(const MyApp());
-
 }
 
 class MyApp extends StatelessWidget {
-
   const MyApp({super.key});
 
   @override
@@ -46,25 +44,26 @@ class DrawingPage extends StatefulWidget {
   State<DrawingPage> createState() => _DrawingPageState();
 }
 
-class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStateMixin {
+class _DrawingPageState extends State<DrawingPage>
+    with SingleTickerProviderStateMixin {
   final DrawingController _drawingController = DrawingController();
 
   late AnimationController _timerController;
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   Color timeColor = Colors.green;
   final double first_timeWidth = 300.0;
   double timeWidth = 300.0;
   bool isTimeLow = false;
-
 
   double _colorOpacity = 1;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> getAnswer_andUpdateElements() async {
     final roomRef =
-    FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+        FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
     final QuerySnapshot subjectSnapshot =
-    await roomRef.collection('subject').get();
+        await roomRef.collection('subject').get();
 
     final DocumentSnapshot doc = subjectSnapshot.docs.first;
     List<dynamic> elements = doc['elements'];
@@ -81,7 +80,6 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
       'answer': selectedElement,
     });
 
-
     setState(() {
       promptWord = selectedElement;
     });
@@ -89,9 +87,10 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
   void initState() {
     super.initState();
+    getAnswer_andUpdateElements();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 30), // Set the desired countdown time
+      duration: Duration(seconds: 10), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
@@ -116,7 +115,6 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     // Start the timer when the game starts
     _timerController.forward();
 
-
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       _getImageData();
       print("SEX");
@@ -126,23 +124,31 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
   /// Called when the timer finishes
   void _onTimerComplete() async {
+    _timer!.cancel(); // Timer 중지
+    _timer = null; // Timer 객체 제거
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     final CollectionReference playersRef = FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
         .collection('players');
 
-    final QuerySnapshot querySnapshot = await playersRef.orderBy(
-        FieldPath.documentId).get();
+    final QuerySnapshot querySnapshot =
+        await playersRef.orderBy(FieldPath.documentId).get();
+
+    print("CURRENTUSER: ${currentUser?.email}");
+
+    await playersRef.doc(currentUser?.email).update({
+      'isDrawer': false,
+      'isViewer': true,
+    });
 
     for (var doc in querySnapshot.docs) {
+      print("USER ID: ${doc.id}");
       final data = doc.data() as Map<String, dynamic>;
-      if (data['isDrawer'] == true && data['isViewer'] == false) {
-        await playersRef.doc(doc.id).update({
-          'isDrawer': false,
-          'isViewer': true,
-        });
-      }
-      else if (data['isDrawer'] == false && data['isViewer'] == true) {
+      if (doc.id == currentUser?.email) {
+      } else {
         await playersRef.doc(doc.id).update({
           'isDrawer': true,
           'isViewer': false,
@@ -150,11 +156,11 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
         break;
       }
     }
-
-    Navigator.pushReplacement(context, MaterialPageRoute(
-        builder: (context) => ViewerPage(roomId: widget.roomId)));
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ViewerPage(roomId: widget.roomId)));
   }
-
 
   @override
   void dispose() {
@@ -184,8 +190,8 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     if (images != null && images.length > 10) {
       // 오래된 데이터 삭제
       var sortedKeys = images.keys.toList()
-        ..sort((a, b) =>
-            images[a]['timestamp'].compareTo(images[b]['timestamp']));
+        ..sort(
+            (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
 
       for (int i = 0; i < images.length - 10; i++) {
         await databaseRef.child(sortedKeys[i]).remove();
@@ -195,18 +201,16 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     print("Uploaded Image and cleaned up old entries.");
   }
 
-
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
-    final Uint8List? data = (await _drawingController.getImageData())?.buffer
-        .asUint8List();
+    final Uint8List? data =
+        (await _drawingController.getImageData())?.buffer.asUint8List();
     if (data == null) {
       debugPrint('Failed to get image data');
       return;
     }
     // Upload the image to Firebase
     //await testUploadImage();
-
 
     await _uploadImage(data);
   }
@@ -257,7 +261,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
 
     try {
       final roomRef =
-      FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
+          FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
 
       await roomRef.update({
         'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
