@@ -254,7 +254,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
       content = Column(
         children: <Widget>[
           Expanded(child: content),
-          if (widget.difficultyOption == 0) buildDefaultActions(_controller,context),
+          if (widget.difficultyOption == 0) buildDefaultActions(_controller),
           if (widget.difficultyOption == 0) buildDefaultTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
 
           if (widget.difficultyOption == 1) buildMediumActions(_controller),
@@ -338,81 +338,11 @@ class _DrawingBoardState extends State<DrawingBoard> {
     );
   }
 
-  static void _showColorPicker(
-      BuildContext context, DrawingController controller) {
-    double r = 255, g = 0, b = 0;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Choose Color"),
-          content: StatefulBuilder(
-            builder: (BuildContext context, setState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildColorSlider("Red", r, (value) {
-                    setState(() => r = value);
-                  }, Colors.red),
-                  _buildColorSlider("Green", g, (value) {
-                    setState(() => g = value);
-                  }, Colors.green),
-                  _buildColorSlider("Blue", b, (value) {
-                    setState(() => b = value);
-                  }, Colors.blue),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 100,
-                    height: 50,
-                    color: Color.fromRGBO(r.toInt(), g.toInt(), b.toInt(), 1.0),
-                  ),
-                ],
-              );
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                controller.setStyle(
-                  color: Color.fromRGBO(r.toInt(), g.toInt(), b.toInt(), 1.0),
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text("Apply"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  static Widget _buildColorSlider(
-      String label, double value, ValueChanged<double> onChanged, Color activeColor) {
-    return Row(
-      children: [
-        Text(label),
-        Expanded(
-          child: Slider(
-            value: value,
-            min: 0,
-            max: 255,
-            divisions: 255,
-            label: value.toInt().toString(),
-            activeColor: activeColor,
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-    );
-  }
 
   static Widget buildDefaultActions(
-      DrawingController controller, BuildContext context) {
+
+      DrawingController controller) {
+    double _colorOpacity = 1;
     return Material(
       color: Colors.white,
       child: SingleChildScrollView(
@@ -434,11 +364,13 @@ class _DrawingBoardState extends State<DrawingBoard> {
                         controller.setStyle(strokeWidth: v),
                   ),
                 ),
-                PopupMenuButton<void>(
-                  icon: const Icon(Icons.color_lens),
-                  onSelected: (_) => _showColorPicker(context, controller),
-                  itemBuilder: (_) => [],
+                ColorPickerPopup(
+                  difficulty: 0,
+                  onColorSelected: (ui.Color selectedColor) {
+                    controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                  },
                 ),
+
                 IconButton(
                   icon: Icon(
                     CupertinoIcons.arrow_turn_up_left,
@@ -466,6 +398,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
   }
 
   static Widget buildMediumActions(DrawingController controller) {
+    double _colorOpacity = 1;
     return Material(
       color: Colors.white,
       child: SingleChildScrollView(
@@ -486,6 +419,12 @@ class _DrawingBoardState extends State<DrawingBoard> {
                       onChanged: (double v) =>
                           controller.setStyle(strokeWidth: v),
                     ),
+                  ),
+                  ColorPickerPopup(
+                    difficulty: 1,
+                    onColorSelected: (ui.Color selectedColor) {
+                      controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                    },
                   ),
                   IconButton(
                     icon: Icon(
@@ -508,6 +447,7 @@ class _DrawingBoardState extends State<DrawingBoard> {
   }
 
   static Widget buildHardActions(DrawingController controller) {
+    double _colorOpacity = 1;
     return Material(
       color: Colors.white,
       child: SingleChildScrollView(
@@ -528,6 +468,12 @@ class _DrawingBoardState extends State<DrawingBoard> {
                       onChanged: (double v) =>
                           controller.setStyle(strokeWidth: v),
                     ),
+                  ),
+                  ColorPickerPopup(
+                    difficulty: 2,
+                    onColorSelected: (ui.Color selectedColor) {
+                      controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                    },
                   ),
                   IconButton(
                     icon: Icon(
@@ -659,6 +605,89 @@ class _DrawingBoardState extends State<DrawingBoard> {
 
 
 }
+class ColorPickerPopup extends StatefulWidget {
+  final void Function(ui.Color color) onColorSelected;
+  final int difficulty;
+
+  const ColorPickerPopup({
+    Key? key,
+    required this.difficulty,
+    required this.onColorSelected,
+  }) : super(key: key);
+
+  @override
+  _ColorPickerPopupState createState() => _ColorPickerPopupState();
+}
+
+class _ColorPickerPopupState extends State<ColorPickerPopup> {
+  List<ui.Color> _getPalette() {
+    // Define color palettes for each difficulty
+    const List<ui.Color> fullPalette = [
+      Colors.red,
+      Colors.green,
+      Colors.blue,
+      Colors.orange,
+      Colors.grey,
+    ];
+
+    switch (widget.difficulty) {
+      case 1:
+        return [
+          Colors.red,
+          Colors.green,
+          Colors.blue,
+        ]; // Primary colors only
+      case 2:
+        return [
+          Colors.red,
+          Colors.blue,
+        ]; // Minimal colors
+      case 0:
+      default:
+        return fullPalette; // All colors
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ui.Color> customPalette = _getPalette();
+
+    return PopupMenuButton<Color>(
+      icon: const Icon(Icons.color_lens),
+      offset: const Offset(0, -50), // Adjust popup position
+      onSelected: (ui.Color value) {
+        widget.onColorSelected(value);
+      },
+      itemBuilder: (_) {
+        return [
+          PopupMenuItem<ui.Color>(
+            enabled: false, // Disable default item behavior
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+              child: Row(
+                children: customPalette.map((ui.Color color) {
+                  return GestureDetector(
+                    onTap: () {
+                      widget.onColorSelected(color);
+                      Navigator.of(context).pop(); // Close the popup menu
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      color: color,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ];
+      },
+    );
+  }
+}
+
 
 
 class DefToolItem {

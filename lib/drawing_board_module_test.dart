@@ -91,7 +91,7 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
     super.initState();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 10), // Set the desired countdown time
+      duration: Duration(seconds: 30), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
@@ -228,6 +228,30 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
         }).toList());
   }
 
+  Stream<Map<String, dynamic>> getDrawerPlayerInfo() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .where('isDrawer', isEqualTo: true) // Fetch the single drawer player
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first; // Take the first (and only) document
+        return {
+          'username': doc.data()['username'] ?? 'Unknown',
+          'score': doc.data()['score'] ?? 0,
+        };
+      }
+      // Return default values if no drawer is found
+      return {
+        'username': 'Unknown',
+        'score': 0,
+      };
+    });
+  }
+
+
   void removePlayerFromGameRoom(String roomId) async {
     final _authentication = FirebaseAuth.instance;
 
@@ -285,23 +309,43 @@ class _DrawingPageState extends State<DrawingPage> with SingleTickerProviderStat
                     ),
                     SizedBox(height: 10),
                     Expanded(
-                      child: LayoutBuilder(
-                        builder: (BuildContext context,
-                            BoxConstraints constraints) {
-                          return DrawingBoard(
-                            boardPanEnabled: false,
-                            boardScaleEnabled: false,
-                            transformationController:
-                            _transformationController,
-                            controller: _drawingController,
-                            background: Container(
-                              width: constraints.maxWidth,
-                              height: constraints.maxHeight,
-                              color: Colors.white,
-                            ),
-                            difficultyOption: 0,
+                      child: StreamBuilder<Map<String, dynamic>>(
+                        stream: getDrawerPlayerInfo(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          }
+
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'unable to fetch drawer data',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            );
+                          }
+
+                          final player = snapshot.data!;
+
+                          return LayoutBuilder(
+                            builder: (BuildContext context,
+                                BoxConstraints constraints) {
+                              return DrawingBoard(
+                                boardPanEnabled: false,
+                                boardScaleEnabled: false,
+                                transformationController:
+                                _transformationController,
+                                controller: _drawingController,
+                                background: Container(
+                                  width: constraints.maxWidth,
+                                  height: constraints.maxHeight,
+                                  color: Colors.white,
+                                ),
+                                difficultyOption: 0,
+                              );
+                              // DRAWING BOARD
+                            },
                           );
-                          // DRAWING BOARD
                         },
                       ),
                     ),
