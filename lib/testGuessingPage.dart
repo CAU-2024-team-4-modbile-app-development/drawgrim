@@ -23,19 +23,29 @@ class _ViewerPageState extends State<ViewerPage> {
   final _controller = TextEditingController();
 
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
+    final currentUserEmail = FirebaseAuth.instance.currentUser?.email; // 현재 로그인한 사용자 이메일
+
     return FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
         .collection('players')
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
+      final username = doc.data()['username'] ?? 'Unknown';
+      final userId = doc.id;
+      final score = doc.data()['score'] ?? 0;
+
+      // 현재 사용자가 본인이라면 '나'로 표시
+      final displayName = (currentUserEmail != null && doc.id == currentUserEmail) ? '나' : username;
+
       return {
-        'username': doc.data()['username'] ?? 'Unknown',
-        'userId': doc.id,
-        'score': doc.data()['score'] ?? 0,
+        'username': displayName, // username을 '나'로 수정
+        'userId': userId,
+        'score': score,
       };
     }).toList());
   }
+
 
   Stream<Map<String, dynamic>> getPlayerRoles() {
     return FirebaseFirestore.instance
@@ -117,10 +127,28 @@ class _ViewerPageState extends State<ViewerPage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Container(
-          padding: const EdgeInsets.all(170.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              FloatingActionButton.extended(
+                onPressed: () {
+                  removePlayerFromGameRoom(widget.roomId);
+                  Navigator.of(context).pop();
+                },
+                label: Text(
+                  "나가기",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                icon: Icon(
+                  Icons.exit_to_app,
+                  color: Colors.white,
+                ),
+                backgroundColor: Colors.red,
+              ),
+              SizedBox(width: 100,),
               Text("정답 입력: "),
               Expanded(
                 child: NewMessage(roomId: widget.roomId),
@@ -129,230 +157,237 @@ class _ViewerPageState extends State<ViewerPage> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: StreamBuilder<DatabaseEvent>(
-                          stream: FirebaseDatabase.instance
-                              .ref('images')
-                              .orderByChild('timestamp')
-                              .limitToLast(1)
-                              .onValue,
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData ||
-                                snapshot.data?.snapshot.value == null) {
-                              return Center(
-                                  child: CircularProgressIndicator());
-                            }
+      body: Container(
+        padding: const EdgeInsets.only(top:10.0),
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: StreamBuilder<DatabaseEvent>(
+                            stream: FirebaseDatabase.instance
+                                .ref('images')
+                                .orderByChild('timestamp')
+                                .limitToLast(1)
+                                .onValue,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData ||
+                                  snapshot.data?.snapshot.value == null) {
+                                return Center(
+                                    child: CircularProgressIndicator());
+                              }
 
-                            final data = snapshot.data!.snapshot.value as Map;
-                            List<MapEntry> sortedEntries =
-                            data.entries.toList()
-                              ..sort((a, b) => b.value['timestamp']
-                                  .compareTo(a.value['timestamp']));
+                              final data = snapshot.data!.snapshot.value as Map;
+                              List<MapEntry> sortedEntries =
+                              data.entries.toList()
+                                ..sort((a, b) => b.value['timestamp']
+                                    .compareTo(a.value['timestamp']));
 
-                            var lastEntry = sortedEntries.first;
-                            String base64String = lastEntry.value['image_data'];
+                              var lastEntry = sortedEntries.first;
+                              String base64String = lastEntry.value['image_data'];
 
-                            Uint8List imageData =
-                            base64Decode(base64String);
+                              Uint8List imageData =
+                              base64Decode(base64String);
 
-                            return AnimatedSwitcher(
-                              duration: Duration(milliseconds: 200),
-                              child: Image.memory(
-                                imageData,
-                                key: ValueKey<String>(lastEntry.key),
-                              ),
-                            );
-                          },
+                              return AnimatedSwitcher(
+                                duration: Duration(milliseconds: 200),
+                                child: Image.memory(
+                                  imageData,
+                                  key: ValueKey<String>(lastEntry.key),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              StreamBuilder<List<Map<String, dynamic>>>(
-                stream: getPlayerInfo(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  }
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: getPlayerInfo(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                  final players = snapshot.data!;
-                  final sortedPlayers = List<Map<String, dynamic>>.from(players)
-                    ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+                    final players = snapshot.data!;
+                    final sortedPlayers = List<Map<String, dynamic>>.from(players)
+                      ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
-                  // Check if any player's score is 100 or more
-                  bool isAnyPlayerScoreAboveThreshold = sortedPlayers
-                      .any((player) => (player['score'] as int) >= 100);
+                    bool isAnyPlayerScoreAboveThreshold = sortedPlayers
+                        .any((player) => (player['score'] as int) >= 100);
 
-                  if (isAnyPlayerScoreAboveThreshold) {
-                    navigateToRankingPage();
-                  }
+                    if (isAnyPlayerScoreAboveThreshold) {
+                      navigateToRankingPage();
+                    }
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: SingleChildScrollView( // This makes the ranking scrollable
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: sortedPlayers.map((player) {
+                              int rank = sortedPlayers.indexOf(player) + 1;
 
-                  return Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: sortedPlayers.map((player) {
-                          int rank = sortedPlayers.indexOf(player) + 1;
+                              // Get the difficulty level based on the player's score
+                              String difficulty = getDifficultyLevel(player['score']);
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Card(
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Container(
-                                width: 150,
-                                padding: const EdgeInsets.all(12),
-                                child: Stack(
-                                  children: [
-                                    if (rank <= 3)
-                                      Positioned(
-                                        left: 0,
-                                        top: 0,
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: rank == 1
-                                                ? Color(0xFFFFD700)
-                                                : rank == 2
-                                                ? Color(0xFFC0C0C0)
-                                                : Colors.brown,
-                                            borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(15),
-                                              bottomRight: Radius.circular(15),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '$rank등',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    Column(
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Container(
+                                    width: 150,
+                                    padding: const EdgeInsets.all(12),
+                                    child: Stack(
                                       children: [
-                                        CircleAvatar(
-                                          radius: 30,
-                                          backgroundColor: Colors.blueAccent
-                                              .withOpacity(0.7),
-                                          child: Icon(
-                                            Icons.person,
-                                            size: 50,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          player['username'],
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.blueAccent,
-                                          ),
-                                        ),
-                                        SizedBox(height: 5),
-                                        Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.star,
-                                              color: Colors.amber,
-                                              size: 20,
+                                        if (rank <= 3)
+                                          Positioned(
+                                            left: 0,
+                                            top: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: rank == 1
+                                                    ? Color(0xFFFFD700)
+                                                    : rank == 2
+                                                    ? Color(0xFFC0C0C0)
+                                                    : Colors.brown,
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(15),
+                                                  bottomRight: Radius.circular(15),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                '$rank등',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
-                                            SizedBox(width: 5),
+                                          ),
+                                        Column(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 30,
+                                              backgroundColor: Colors.blueAccent.withOpacity(0.7),
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
                                             Text(
-                                              '점수: ${player['score']}',
+                                              player['username'],
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blueAccent,
+                                              ),
+                                            ),
+                                            SizedBox(height: 5),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                  size: 20,
+                                                ),
+                                                SizedBox(width: 5),
+                                                Text(
+                                                  '점수: ${player['score']}',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            // Display difficulty level based on score
+                                            Text(
+                                              '난이도: $difficulty',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w500,
+                                                color: Colors.red,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          StreamBuilder<Map<String, dynamic>>(
-            stream: getPlayerRoles(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              }
+                    );
+                  },
+                )
 
-              final roles = snapshot.data!;
-              String? drawer = roles['drawer'];
-              final List<dynamic> viewers = roles['viewer'];
 
-              if (drawer == currentUser?.email) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DrawingPage(roomId: widget.roomId),
-                    ),
-                  );
-                });
-              }
+              ],
 
-              return SizedBox.shrink();
-            },
-          ),
-          Positioned(
-            bottom: 20,
-            right: 30,
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                removePlayerFromGameRoom(widget.roomId);
-                Navigator.of(context).pop();
-              },
-              label: Text(
-                "나가기",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              icon: Icon(
-                Icons.exit_to_app,
-                color: Colors.white,
-              ),
-              backgroundColor: Colors.red,
             ),
-          ),
-        ],
+
+            StreamBuilder<Map<String, dynamic>>(
+              stream: getPlayerRoles(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final roles = snapshot.data!;
+                String? drawer = roles['drawer'];
+                final List<dynamic> viewers = roles['viewer'];
+
+                if (drawer == currentUser?.email) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DrawingPage(roomId: widget.roomId),
+                      ),
+                    );
+                  });
+                }
+
+                return SizedBox.shrink();
+              },
+            ),
+
+          ],
+        ),
       ),
     );
   }
 }
+
+  String getDifficultyLevel(int score) {
+    if (score <= 40) {
+      return '쉬움';
+    } else if (score <= 60) {
+      return '중간';
+    } else if (score <= 100) {
+      return '어려움';
+    } else {
+      return '어려움';
+    }
+  }
+
 
 class NewMessage extends StatefulWidget {
   final String roomId;
@@ -396,15 +431,22 @@ class _NewMessageState extends State<NewMessage> {
             padding: const EdgeInsets.all(10.0),
             child: TextField(
               controller: _controler,
-              decoration: const InputDecoration(
-                labelText: '답을 입력하세요',
+              decoration: InputDecoration(
+                labelStyle: TextStyle(color: Colors.black),
+                filled: true,
+                fillColor: Colors.blueAccent.withOpacity(0.2), // Set the background color
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12), // Round corners
+                  borderSide: BorderSide.none, // Remove border line
+                ),
               ),
+              style: TextStyle(color: Colors.black), // Text color
               onChanged: (value) {
                 setState(() {
                   newMessage = value;
                 });
               },
-            ),
+            )
           ),
         ),
         IconButton(

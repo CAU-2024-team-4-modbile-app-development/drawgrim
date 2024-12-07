@@ -185,7 +185,7 @@ class _GameRoomState extends State<GameRoom> {
                                         contentPadding:
                                         EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
                                         title: Text(
-                                          room['roomName'],
+                                            '${room['roomName']} - 방',
                                           style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                                         ),
                                         trailing: Row(
@@ -261,23 +261,37 @@ class _GameRoomState extends State<GameRoom> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: createRoom,
-                          child: const Text(
-                            "방만들기",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Container(
+                              width: 90,
+                              height: 90,
+
+                              child: Image.asset(
+                                'assets/푸앙_윙크.png',
+                              ),
                             ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shadowColor: Colors.transparent,
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
+                            ElevatedButton(
+                              onPressed: createRoom,
+                              child: const Text(
+                                "방만들기",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                shadowColor: Colors.transparent,
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                            ),
+
+                          ],
                         ),
+
                       ],
                     ),
                   ),

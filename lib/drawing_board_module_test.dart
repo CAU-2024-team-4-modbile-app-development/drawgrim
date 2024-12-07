@@ -13,6 +13,8 @@ import 'dart:convert'; //데이터 base64로 변환
 
 import 'dart:async';
 
+import 'Ranking.dart';
+
 String promptWord = '';
 Timer? _timer;
 
@@ -90,7 +92,7 @@ class _DrawingPageState extends State<DrawingPage>
     getAnswer_andUpdateElements();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 10), // Set the desired countdown time
+      duration: Duration(seconds: 20), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
@@ -193,13 +195,13 @@ class _DrawingPageState extends State<DrawingPage>
 
     Map<dynamic, dynamic>? images = snapshot.value as Map?;
 
-    if (images != null && images.length > 5) {
+    if (images != null && images.length > 3) {
       // 오래된 데이터 삭제
       var sortedKeys = images.keys.toList()
         ..sort(
             (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
 
-      for (int i = 0; i < images.length - 5; i++) {
+      for (int i = 0; i < images.length - 3; i++) {
         await databaseRef.child(sortedKeys[i]).remove();
       }
     }
@@ -288,6 +290,37 @@ class _DrawingPageState extends State<DrawingPage>
     } catch (e) {
       print("Error removing player from room: $e");
     }
+  }
+
+  void navigateToRankingPage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Fetch top 3 players based on score
+      final playerInfoSnapshot = await FirebaseFirestore.instance
+          .collection('gameRooms')
+          .doc(widget.roomId)
+          .collection('players')
+          .orderBy('score', descending: true)
+          .limit(3)
+          .get();
+
+      // Collect player names
+      List topPlayers = playerInfoSnapshot.docs
+          .map((doc) => doc.data()['username'] ?? 'Unknown')
+          .toList();
+
+      // Navigate to Ranking page with top 3 player names
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Ranking(
+            roomId: widget.roomId,
+            first: topPlayers.length > 0 ? topPlayers[0] : '없음',
+            second: topPlayers.length > 1 ? topPlayers[1] : '없음',
+            third: topPlayers.length > 2 ? topPlayers[2] : '없음',
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -386,6 +419,13 @@ class _DrawingPageState extends State<DrawingPage>
                     final sortedPlayers = List<Map<String, dynamic>>.from(players)
                       ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
+                    bool isAnyPlayerScoreAboveThreshold = sortedPlayers
+                        .any((player) => (player['score'] as int) >= 100);
+
+                    if (isAnyPlayerScoreAboveThreshold) {
+                      navigateToRankingPage();
+                    }
+
                     return Align(
                       alignment: Alignment.centerRight,
                       child: Padding(
@@ -395,6 +435,10 @@ class _DrawingPageState extends State<DrawingPage>
                           children: sortedPlayers.map((player) {
                             // Find the index in the sorted list to determine ranking
                             int rank = sortedPlayers.indexOf(player) + 1;
+
+                            // If the player is the current user, show "나" instead of their username
+                            String displayName = player['userId'] == FirebaseAuth.instance.currentUser?.email ? "나" : player['username'];
+                            String difficulty = getDifficultyLevel(player['score']);
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -450,7 +494,7 @@ class _DrawingPageState extends State<DrawingPage>
                                           ),
                                           SizedBox(height: 10),
                                           Text(
-                                            player['username'],
+                                            displayName,  // Display "나" for the current user
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
@@ -474,9 +518,21 @@ class _DrawingPageState extends State<DrawingPage>
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
+                                              SizedBox(height: 10),
+                                              // Display difficulty level based on score
+
                                             ],
                                           ),
+                                          Text(
+                                            '난이도: $difficulty',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.red,
+                                            ),
+                                          ),
                                         ],
+
                                       ),
                                     ],
                                   ),
@@ -489,6 +545,7 @@ class _DrawingPageState extends State<DrawingPage>
                     );
                   },
                 ),
+
                 Positioned(
                   bottom: 20,
                   right: 40,
@@ -519,5 +576,18 @@ class _DrawingPageState extends State<DrawingPage>
       ),
 
     );
+  }
+}
+
+
+String getDifficultyLevel(int score) {
+  if (score <= 40) {
+    return '쉬움';
+  } else if (score <= 60) {
+    return '중간';
+  } else if (score <= 100) {
+    return '어려움';
+  } else {
+    return '어려움';
   }
 }

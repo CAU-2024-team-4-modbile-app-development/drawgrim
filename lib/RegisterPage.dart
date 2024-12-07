@@ -84,7 +84,7 @@ class _RegisterFormState extends State<RegisterForm> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.white),
                 onChanged: (value) {
                   password = value;
                 },
@@ -110,7 +110,7 @@ class _RegisterFormState extends State<RegisterForm> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: Colors.white),
                 onChanged: (value) {
                   username = value;
                 },

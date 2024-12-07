@@ -100,6 +100,7 @@ class OpenPage extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 10),
                 Container(
                   width: 200,
                   height: 200,

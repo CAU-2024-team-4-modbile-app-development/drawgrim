@@ -78,6 +78,7 @@ flutter:
   assets:
       - assets/
       - assets/puang.png
+      - assets/푸앙_윙크.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
