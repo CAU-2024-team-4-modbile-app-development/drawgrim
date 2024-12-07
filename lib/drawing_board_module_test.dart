@@ -255,6 +255,12 @@ class _DrawingPageState extends State<DrawingPage>
     });
   }
 
+  // Function to map score to difficulty
+  int _mapScoreToDifficulty(int score) {
+    if (score < 100) return 0; // Easy
+    if (score < 200) return 1; // Medium
+    return 2; // Hard
+  }
 
   void removePlayerFromGameRoom(String roomId) async {
     final _authentication = FirebaseAuth.instance;
@@ -313,25 +319,36 @@ class _DrawingPageState extends State<DrawingPage>
                     ),
                     SizedBox(height: 10),
                     Expanded(
-                      child: LayoutBuilder(
-                        builder: (BuildContext context,
-                            BoxConstraints constraints) {
-                          return DrawingBoard(
-                            boardPanEnabled: false,
-                            boardScaleEnabled: false,
-                            transformationController:
-                            _transformationController,
-                            controller: _drawingController,
-                            background: Container(
-                              width: constraints.maxWidth,
-                              height: constraints.maxHeight,
-                              color: Colors.white,
-                            ),
-                            difficultyOption: 0,
-                          );
-                          // DRAWING BOARD
-                        },
-                      ),
+                    child: StreamBuilder<Map<String, dynamic>>(
+                     stream: getDrawerPlayerInfo(),
+                     builder: (context, snapshot) {
+                       // Default difficulty to 0 if no data is available
+                        int difficultyOption = 0;
+
+                       if (snapshot.hasData && snapshot.data != null) {
+                          final score = snapshot.data!['score'] ?? 0;
+                         difficultyOption = _mapScoreToDifficulty(score);
+                        }
+
+                       return LayoutBuilder(
+                          builder: (BuildContext context,
+                             BoxConstraints constraints) {
+                           return DrawingBoard(
+                             boardPanEnabled: false,
+                             boardScaleEnabled: false,
+                             transformationController: _transformationController,
+                             controller: _drawingController,
+                             background: Container(
+                               width: constraints.maxWidth,
+                                height: constraints.maxHeight,
+                                color: Colors.white,
+                              ),
+                              difficultyOption: difficultyOption,
+                            );
+                          },
+                        );
+                      },
+                    ),
                       /*
                       child: StreamBuilder<Map<String, dynamic>>(
                         stream: getDrawerPlayerInfo(),
