@@ -20,8 +20,8 @@ class OpenPage extends StatelessWidget {
           children: [
             // Container for the image with a frame style
             Container(
-              width: 300,
-              height: 300,
+              width: 450,
+              height: 450,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -58,7 +58,7 @@ class OpenPage extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                    backgroundColor: Colors.orangeAccent,
+                    backgroundColor: Colors.blueAccent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -67,7 +67,7 @@ class OpenPage extends StatelessWidget {
                   child: const Text(
                     '로그인',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -94,14 +94,24 @@ class OpenPage extends StatelessWidget {
                   child: const Text(
                     '회원가입',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                   ),
                 ),
+                SizedBox(height: 10),
+                Container(
+                  width: 200,
+                  height: 200,
+
+                  child: Image.asset(
+                    'assets/puang.png',
+                  ),
+                ),
               ],
             ),
+
           ],
         ),
       ),

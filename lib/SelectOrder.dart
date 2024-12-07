@@ -131,6 +131,8 @@ class _SelectorderState extends State<Selectorder> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
+
         title: Text(
           "순서 정하기",
           style: TextStyle(

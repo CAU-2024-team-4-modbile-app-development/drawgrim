@@ -69,7 +69,7 @@ class _GameRoomState extends State<GameRoom> {
     } else {
       // 방 이름이 비어있을 경우
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a room name')),
+        const SnackBar(content: Text('방 이름 입력')),
       );
     }
   }
@@ -139,7 +139,7 @@ class _GameRoomState extends State<GameRoom> {
                           child: Center(
                             child: Text(
                               '방 목록',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -179,24 +179,27 @@ class _GameRoomState extends State<GameRoom> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10.0),
                                     ),
-                                    child: ListTile(
-                                      contentPadding:
-                                      EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
-                                      title: Text(
-                                        room['roomName'],
-                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    child: Container(
+                                      height: 100,
+                                      child: ListTile(
+                                        contentPadding:
+                                        EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
+                                        title: Text(
+                                            '${room['roomName']} - 방',
+                                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text('$playerCount/4', style: TextStyle(fontSize: 30)),
+                                            SizedBox(width: 8),
+                                            Icon(Icons.person, size: 30),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          joinRoom(room.id);
+                                        },
                                       ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text('$playerCount/4', style: TextStyle(fontSize: 16)),
-                                          SizedBox(width: 8),
-                                          Icon(Icons.person, size: 20),
-                                        ],
-                                      ),
-                                      onTap: () {
-                                        joinRoom(room.id);
-                                      },
                                     ),
                                   );
                                 },
@@ -215,23 +218,80 @@ class _GameRoomState extends State<GameRoom> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextField(
-                          controller: _roomNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Enter Room Name',
-                            border: OutlineInputBorder(),
+                        Container(
+                          width: 190,
+                          height: 190,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              roomName = value;
-                            });
-                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.asset(
+                              'assets/background.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: createRoom,
-                          child: const Text('Create Room'),
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: 20.0),
+                          child: TextField(
+                            controller: _roomNameController,
+                            decoration: const InputDecoration(
+                              labelText: '방 이름 입력',
+                              border: OutlineInputBorder(),
+                            ),
+                            style: TextStyle(
+                              fontSize: 25.0, // 폰트 크기 설정
+                              fontWeight: FontWeight.bold, // 굵게 설정
+                              color: Colors.black, // 폰트 색상
+                            ),
+
+                            onChanged: (value) {
+                              setState(() {
+                                roomName = value;
+                              });
+                            },
+                          ),
                         ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Container(
+                              width: 90,
+                              height: 90,
+
+                              child: Image.asset(
+                                'assets/푸앙_윙크.png',
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: createRoom,
+                              child: const Text(
+                                "방만들기",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                shadowColor: Colors.transparent,
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                            ),
+
+                          ],
+                        ),
+
                       ],
                     ),
                   ),

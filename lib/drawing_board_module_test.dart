@@ -13,6 +13,8 @@ import 'dart:convert'; //데이터 base64로 변환
 
 import 'dart:async';
 
+import 'Ranking.dart';
+
 String promptWord = '';
 Timer? _timer;
 
@@ -90,7 +92,7 @@ class _DrawingPageState extends State<DrawingPage>
     getAnswer_andUpdateElements();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 10), // Set the desired countdown time
+      duration: Duration(seconds: 20), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
@@ -116,8 +118,11 @@ class _DrawingPageState extends State<DrawingPage>
     _timerController.forward();
 
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      _getImageData();
-      print("SEX");
+      if (mounted && context != null) {
+        _getImageData();
+      } else {
+        timer.cancel();
+      }
     });
     //upload image every 1 second
   }
@@ -164,8 +169,11 @@ class _DrawingPageState extends State<DrawingPage>
 
   @override
   void dispose() {
+    // 모든 컨트롤러와 타이머 안전하게 해제
     _timerController.dispose();
     _drawingController.dispose();
+    _timer?.cancel();
+    _timer = null;
     super.dispose();
   }
 
@@ -187,13 +195,13 @@ class _DrawingPageState extends State<DrawingPage>
 
     Map<dynamic, dynamic>? images = snapshot.value as Map?;
 
-    if (images != null && images.length > 10) {
+    if (images != null && images.length > 3) {
       // 오래된 데이터 삭제
       var sortedKeys = images.keys.toList()
         ..sort(
             (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
 
-      for (int i = 0; i < images.length - 10; i++) {
+      for (int i = 0; i < images.length - 3; i++) {
         await databaseRef.child(sortedKeys[i]).remove();
       }
     }
@@ -203,16 +211,65 @@ class _DrawingPageState extends State<DrawingPage>
 
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
-    final Uint8List? data =
-        (await _drawingController.getImageData())?.buffer.asUint8List();
-    if (data == null) {
-      debugPrint('Failed to get image data');
-      return;
+    try {
+      // null 체크와 함께 안전하게 이미지 데이터 가져오기
+      final imageData = await _drawingController.getImageData();
+      if (imageData != null) {
+        final Uint8List data = imageData.buffer.asUint8List();
+        await _uploadImage(data);
+      }
+    } catch (e) {
+      print('Error getting image data: $e');
     }
-    // Upload the image to Firebase
-    //await testUploadImage();
+  }
 
-    await _uploadImage(data);
+// Add this method to your _DrawingPageState class
+  Stream<List<Map<String, dynamic>>> getPlayerInfo() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      return {
+        'username': doc.data()['username'] ?? 'Unknown',
+        'userId': doc.id,
+        'score': doc.data()['score'] ?? 0,
+      };
+    }).toList());
+  }
+
+
+
+  Stream<Map<String, dynamic>> getDrawerPlayerInfo() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .where('isDrawer', isEqualTo: true)
+        .limit(1) // Ensure only one drawer is fetched
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        final data = doc.data();
+        return {
+          'username': data['username'] ?? 'Unknown',
+          'score': data['score'] ?? 0,
+        };
+      }
+      return {
+        'username': 'Unknown',
+        'score': 0,
+      };
+    });
+  }
+
+  // Function to map score to difficulty
+  int _mapScoreToDifficulty(int score) {
+    if (score < 30) return 0; // Easy
+    if (score < 70) return 1; // Medium
+    return 2; // Hard
   }
 
   void removePlayerFromGameRoom(String roomId) async {
@@ -235,72 +292,302 @@ class _DrawingPageState extends State<DrawingPage>
     }
   }
 
+  void navigateToRankingPage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Fetch top 3 players based on score
+      final playerInfoSnapshot = await FirebaseFirestore.instance
+          .collection('gameRooms')
+          .doc(widget.roomId)
+          .collection('players')
+          .orderBy('score', descending: true)
+          .limit(3)
+          .get();
+
+      // Collect player names
+      List topPlayers = playerInfoSnapshot.docs
+          .map((doc) => doc.data()['username'] ?? 'Unknown')
+          .toList();
+
+      // Navigate to Ranking page with top 3 player names
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Ranking(
+            roomId: widget.roomId,
+            first: topPlayers.length > 0 ? topPlayers[0] : '없음',
+            second: topPlayers.length > 1 ? topPlayers[1] : '없음',
+            third: topPlayers.length > 2 ? topPlayers[2] : '없음',
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey,
-      body: Stack(
-        children: <Widget>[
-          // Main content
-          Column(
-            children: <Widget>[
-              // Prompt Word
-              SizedBox(height: 25),
-              Text(
-                promptWord,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Transform.translate(
-                offset: isTimeLow
-                    ? Offset(5 * (0.5 - _timerController.value), 0)
-                    : Offset(0, 0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width *
-                      (timeWidth / first_timeWidth),
-                  height: 3,
-                  color: timeColor,
-                ),
-              ),
-              SizedBox(height: 10),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    return DrawingBoard(
-                      boardPanEnabled: false,
-                      boardScaleEnabled: false,
-                      transformationController: _transformationController,
-                      controller: _drawingController,
-                      background: Container(
-                        width: constraints.maxWidth,
-                        height: constraints.maxHeight,
-                        color: Colors.white,
+      backgroundColor:Colors.blueAccent,
+      body: Row(
+        children: [
+          // Drawing area
+          Expanded(
+            child: Stack(
+              children: <Widget>[
+                // Main content
+                Column(
+                  children: <Widget>[
+                    // Prompt Word
+                    SizedBox(height: 25),
+                    Text(
+                      promptWord,
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Transform.translate(
+                      offset: isTimeLow
+                          ? Offset(5 * (0.5 - _timerController.value), 0)
+                          : Offset(0, 0),
+                      child: Container(
+                        width: MediaQuery
+                            .of(context)
+                            .size
+                            .width *
+                            (timeWidth / first_timeWidth),
+                        height: 3,
+                        color: timeColor,
                       ),
-                      showDefaultActions: true,
-                      showDefaultTools: true,
-                    );
-                    //DRAWING BOARD
-                  },
+                    ),
+                    SizedBox(height: 10),
+                    Expanded(
+                    child: StreamBuilder<Map<String, dynamic>>(
+                     stream: getDrawerPlayerInfo(),
+                     builder: (context, snapshot) {
+                       // Default difficulty to 0 if no data is available
+                        int difficultyOption = 0;
+
+                       if (snapshot.hasData && snapshot.data != null) {
+                          final score = snapshot.data!['score'] ?? 0;
+                         difficultyOption = _mapScoreToDifficulty(score);
+                        }
+
+                       return LayoutBuilder(
+                          builder: (BuildContext context,
+                             BoxConstraints constraints) {
+                           return DrawingBoard(
+                             boardPanEnabled: false,
+                             boardScaleEnabled: false,
+                             transformationController: _transformationController,
+                             controller: _drawingController,
+                             background: Container(
+                               width: constraints.maxWidth,
+                                height: constraints.maxHeight,
+                                color: Colors.white,
+                              ),
+                              difficultyOption: difficultyOption,
+                            );
+                          },
+                        );
+                      },
+                    ),
+
+                    ),
+                  ],
                 ),
-              ),
-            ],
+
+                // Positioned 'Back' button at top-left
+
+              ],
+            ),
           ),
 
-          // Positioned 'Back' button at top-left
-          Positioned(
-            top: 20,
-            left: 20,
-            child: ElevatedButton(
-              onPressed: () async {
-                removePlayerFromGameRoom(widget.roomId);
+          // Player information column
+          Container(
+            width: 200, // Adjust width as needed
+            color: Colors.white,
+            child: Stack(
+              children: [
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: getPlayerInfo(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                Navigator.of(context).pop();
-              },
-              child: Text('Back'),
+                    final players = snapshot.data!;
+                    // Sort players by score in descending order
+                    final sortedPlayers = List<Map<String, dynamic>>.from(players)
+                      ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+
+                    bool isAnyPlayerScoreAboveThreshold = sortedPlayers
+                        .any((player) => (player['score'] as int) >= 100);
+
+                    if (isAnyPlayerScoreAboveThreshold) {
+                      navigateToRankingPage();
+                    }
+
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: sortedPlayers.map((player) {
+                            // Find the index in the sorted list to determine ranking
+                            int rank = sortedPlayers.indexOf(player) + 1;
+
+                            // If the player is the current user, show "나" instead of their username
+                            String displayName = player['userId'] == FirebaseAuth.instance.currentUser?.email ? "나" : player['username'];
+                            String difficulty = getDifficultyLevel(player['score']);
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Container(
+                                  width: 150,
+                                  padding: const EdgeInsets.all(12),
+                                  child: Stack(
+                                    children: [
+                                      // Ranking display
+                                      if (rank <= 3)
+                                        Positioned(
+                                          left: 0,
+                                          top: 0,
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: rank == 1
+                                                  ? Color(0xFFFFD700)
+                                                  : rank == 2
+                                                  ? Color(0xFFC0C0C0)
+                                                  : Colors.brown,
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(15),
+                                                bottomRight: Radius.circular(15),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '$rank등',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                      // Rest of the player card content remains the same
+                                      Column(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 30,
+                                            backgroundColor: Colors.blueAccent.withOpacity(0.7),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            displayName,  // Display "나" for the current user
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              ),
+                                              SizedBox(width: 5),
+                                              Text(
+                                                '점수: ${player['score']}',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+                                              // Display difficulty level based on score
+
+                                            ],
+                                          ),
+                                          Text(
+                                            '난이도: $difficulty',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                Positioned(
+                  bottom: 20,
+                  right: 40,
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      removePlayerFromGameRoom(widget.roomId);
+                      Navigator.of(context).pop();
+                    },
+                    label:Text(
+                      "나가기",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    icon: Icon(Icons.exit_to_app,
+                      color: Colors.white,
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+
     );
+  }
+}
+
+
+String getDifficultyLevel(int score) {
+  if (score <= 40) {
+    return '쉬움';
+  } else if (score <= 60) {
+    return '중간';
+  } else if (score <= 100) {
+    return '어려움';
+  } else {
+    return '어려움';
   }
 }

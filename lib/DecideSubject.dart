@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:rive/rive.dart';
 import 'SelectOrder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,9 +41,9 @@ class _DecideSubjectState extends State<DecideSubject> {
       _isPlant?.value = false;
 
       final roomRef =
-          FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+      FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
       final QuerySnapshot subjectSnapshot =
-          await roomRef.collection('subject').get();
+      await roomRef.collection('subject').get();
 
       final DocumentSnapshot doc = subjectSnapshot.docs.first;
       final String subject = doc['subject'];
@@ -60,21 +59,6 @@ class _DecideSubjectState extends State<DecideSubject> {
           _isPlant?.value = true;
           break;
       }
-
-      // List<String> elements = doc['elements'];
-      //
-      //   final random = Random();
-      //   final randomIndex = random.nextInt(elements.length);
-      //   final String selectedElement = elements[randomIndex];
-      //   print(selectedElement);
-      //
-      //   elements.removeAt(randomIndex);
-      //
-      //   await roomRef.collection('subject').doc(doc.id).update({
-      //     'elements': elements,
-      //     'answer': selectedElement,
-      //   });
-
     }
   }
 
@@ -84,8 +68,8 @@ class _DecideSubjectState extends State<DecideSubject> {
         context,
         MaterialPageRoute(
             builder: (context) => Selectorder(
-                  roomId: widget.roomId,
-                )), // Drawer page
+              roomId: widget.roomId,
+            )),
       );
     }
   }
@@ -94,6 +78,7 @@ class _DecideSubjectState extends State<DecideSubject> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
         title: Text(
           "주제 선택",
           style: TextStyle(
@@ -101,15 +86,13 @@ class _DecideSubjectState extends State<DecideSubject> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true, // 제목 중앙 정렬
+        centerTitle: true,
       ),
       body: Center(
-        child: Center(
-          child: RiveAnimation.asset(
-            "assets/제비뽑기.riv",
-            fit: BoxFit.contain,
-            onInit: _onRiveInit,
-          ),
+        child: RiveAnimation.asset(
+          "assets/제비뽑기.riv",
+          fit: BoxFit.contain,
+          onInit: _onRiveInit,
         ),
       ),
     );

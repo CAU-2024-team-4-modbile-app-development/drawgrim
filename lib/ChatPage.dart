@@ -370,7 +370,6 @@ class _ChatPageState extends State<ChatPage> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -380,60 +379,120 @@ class _ChatPageState extends State<ChatPage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false, // 뒤로가기 버튼 제거
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // 게임 시작 버튼 (방장만 클릭 가능)
-              if (isHost)
-                ElevatedButton.icon(
-                  onPressed: startGame,
-                  icon: Icon(
-                    Icons.play_arrow,
-                    size: 24,
-                    color: Colors.white,
-                  ),
-                  label: Text(
-                    "게임 시작",
+              // 나가기 버튼 (왼쪽 배치)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0,right:220), // 왼쪽에 간격 추가
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+                    removePlayerFromGameRoom(widget.roomId);
+                    Navigator.of(context).pop();
+                  },
+                  label:Text(
+                    "나가기",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    backgroundColor: Colors.blueAccent, // 버튼 배경색
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // 버튼 모서리 둥글게
+
+                  icon: Icon(Icons.exit_to_app,
+                    color: Colors.white,
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              ),
+
+              if (isHost)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0), // 오른쪽에 간격 추가
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.blue.shade600, Colors.blue.shade800],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.shade200,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    elevation: 6, // 그림자 깊이
+                    child: ElevatedButton.icon(
+                      onPressed: startGame,
+                      icon: Icon(
+                        Icons.play_arrow,
+                        size: 24,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        "게임 시작",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
                   ),
                 ),
 
+              // 준비 버튼 (비방장일 경우만, 오른쪽 배치)
               if (!isHost)
-                OutlinedButton.icon(
-                  onPressed: toggleReady,
-                  icon: Icon(
-                    isReady ? Icons.check_circle : Icons.timelapse,
-                    size: 24,
-                    color: isReady ? Colors.green : Colors.blueAccent,
-                  ),
-                  label: Text(
-                    isReady ? "준비 완료" : "준비하기",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: isReady ? Colors.green : Colors.blueAccent,
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0), // 오른쪽에 간격 추가
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        colors: isReady
+                            ? [Colors.green.shade100, Colors.green.shade200]
+                            : [Colors.white, Colors.blue.shade50],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    side: BorderSide(
-                      color: isReady ? Colors.green : Colors.blueAccent, // 버튼 테두리 색상ㅇ
-                      width: 2,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12), // 버튼 모서리 둥글게
+                    child: OutlinedButton.icon(
+                      onPressed: toggleReady,
+                      icon: Icon(
+                        isReady ? Icons.check_circle : Icons.timelapse,
+                        size: 24,
+                        color: isReady ? Colors.green : Colors.blueAccent,
+                      ),
+                      label: Text(
+                        isReady ? "준비 완료" : "준비 하기",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: isReady ? Colors.green : Colors.blueAccent,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        side: BorderSide.none,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
                     ),
                   ),
                 ),
@@ -469,7 +528,7 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 final players = snapshot.data!;
-                List<Widget> faceIcons = [];
+                List<Widget> playerIcons = [];
 
                 for (int i = 0; i < players.length; i++) {
                   final player = players[i];
@@ -481,52 +540,62 @@ class _ChatPageState extends State<ChatPage> {
                       ? Alignment.bottomLeft
                       : Alignment.bottomRight;
 
-                  faceIcons.add(
+                  playerIcons.add(
                     Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Align(
                         alignment: alignment,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // 둥근 아바타
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundColor: Colors.blueAccent.withOpacity(0.7),
-                              child: Icon(
-                                Icons.face,
-                                size: 50,
-                                color: Colors.white,
-                              ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blueAccent.withOpacity(0.7),
+                                Colors.blue.shade300.withOpacity(0.5)
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            SizedBox(height: 10),
-                            // 이름표
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                  ),
-                                ],
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 6,
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                player['username'],
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent,
+                            ],
+                          ),
+                          width: 180,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: Colors.white,
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 10),
+                              Text(
+                                player['username'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 10.0,
+                                      color: Colors.black45,
+                                      offset: Offset(2.0, 2.0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -535,11 +604,13 @@ class _ChatPageState extends State<ChatPage> {
 
                 return Stack(
                   children: [
+                    // Background with subtle pattern
+
                     // 채팅창 중심 컨테이너
                     Center(
                       child: Container(
-                        width: 500,
-                        height: 500,
+                        width: 400,
+                        height:400,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
@@ -547,9 +618,13 @@ class _ChatPageState extends State<ChatPage> {
                             BoxShadow(
                               color: Colors.black26,
                               offset: Offset(0, 4),
-                              blurRadius: 6,
+                              blurRadius: 15,
                             ),
                           ],
+                          border: Border.all(
+                            color: Colors.blueAccent.withOpacity(0.2),
+                            width: 2,
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -573,13 +648,19 @@ class _ChatPageState extends State<ChatPage> {
                                   });
 
                                   return ListView.builder(
-                                    controller: _scrollController, // Controller 설정
+                                    controller: _scrollController,
                                     itemBuilder: (context, index) {
-                                      return ChatElement(
-                                        isMe: docs[index]['uid'] ==
-                                            _authentication.currentUser!.uid,
-                                        userName: docs[index]['userName'],
-                                        text: docs[index]['text'],
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                            vertical: 8.0
+                                        ),
+                                        child: ChatElement(
+                                          isMe: docs[index]['uid'] ==
+                                              _authentication.currentUser!.uid,
+                                          userName: docs[index]['userName'],
+                                          text: docs[index]['text'],
+                                        ),
                                       );
                                     },
                                     itemCount: docs.length,
@@ -588,25 +669,28 @@ class _ChatPageState extends State<ChatPage> {
                               ),
                             ),
                             // 메시지 입력 필드
-                            NewMessage(roomId: widget.roomId),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: NewMessage(roomId: widget.roomId),
+                            ),
+
                           ],
                         ),
                       ),
                     ),
                     // 사용자 아바타를 배치
-                    ...faceIcons,
+                    ...playerIcons,
                   ],
+
                 );
+
               },
             );
           },
         ),
+
+
       ),
     );
   }
-
-}
-
-
-
-
+  }

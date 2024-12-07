@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'drawing_controller.dart';
@@ -21,11 +21,13 @@ typedef DefaultToolsBuilder = List<DefToolItem> Function(
 );
 
 
+
 class DrawingBoard extends StatefulWidget {
   const DrawingBoard({
     super.key,
     required this.background,
     this.controller,
+    this.difficultyOption = 0,
     this.showDefaultActions = false,
     this.showDefaultTools = false,
     this.onPointerDown,
@@ -78,6 +80,7 @@ class DrawingBoard extends StatefulWidget {
 
 
   final Clip boardClipBehavior;
+
   final PanAxis panAxis;
   final EdgeInsets? boardBoundaryMargin;
   final bool boardConstrained;
@@ -92,6 +95,8 @@ class DrawingBoard extends StatefulWidget {
   final TransformationController? transformationController;
   final AlignmentGeometry alignment;
 
+
+  final int difficultyOption;
 
   static List<DefToolItem> defaultTools(
       Type currType, DrawingController controller) {
@@ -108,7 +113,42 @@ class DrawingBoard extends StatefulWidget {
           isActive: currType == StraightLine,
           icon: Icons.show_chart,
           onTap: () => controller.setPaintContent(StraightLine())),
+      DefToolItem(
+          isActive: currType == Circle,
+          icon: CupertinoIcons.circle,
+          onTap: () => controller.setPaintContent(Circle())),
+      DefToolItem(
+          isActive: currType == Rectangle,
+          icon: CupertinoIcons.stop,
+          onTap: () => controller.setPaintContent(Rectangle())),
+      DefToolItem(
+          isActive: currType == Eraser,
 
+          icon: CupertinoIcons.bandage,
+          onTap: () => controller.setPaintContent(Eraser())),
+    ];
+  }
+
+  static List<DefToolItem> mediumTools(
+      Type currType, DrawingController controller) {
+    return <DefToolItem>[
+
+      DefToolItem(
+          isActive: currType == SimpleLine,
+          icon: Icons.edit,
+          onTap: () => controller.setPaintContent(SimpleLine())),
+      DefToolItem(
+          isActive: currType == SmoothLine,
+          icon: Icons.brush,
+          onTap: () => controller.setPaintContent(SmoothLine())),
+      DefToolItem(
+          isActive: currType == StraightLine,
+          icon: Icons.show_chart,
+          onTap: () => controller.setPaintContent(StraightLine())),
+      DefToolItem(
+          isActive: currType == Circle,
+          icon: CupertinoIcons.circle,
+          onTap: () => controller.setPaintContent(Circle())),
 
       DefToolItem(
           isActive: currType == Eraser,
@@ -117,15 +157,62 @@ class DrawingBoard extends StatefulWidget {
     ];
   }
 
+  static List<DefToolItem> hardTools(
+      Type currType, DrawingController controller) {
+    return <DefToolItem>[
+
+      DefToolItem(
+          isActive: currType == SimpleLine,
+          icon: Icons.edit,
+          onTap: () => controller.setPaintContent(SimpleLine())),
+      DefToolItem(
+          isActive: currType == SmoothLine,
+          icon: Icons.brush,
+          onTap: () => controller.setPaintContent(SmoothLine())),
+      DefToolItem(
+          isActive: currType == StraightLine,
+          icon: Icons.show_chart,
+          onTap: () => controller.setPaintContent(StraightLine())),
+
+      DefToolItem(
+          isActive: currType == Eraser,
+          icon: CupertinoIcons.bandage,
+          onTap: () => controller.setPaintContent(Eraser())),
+    ];
+  }
+
+
   static Widget buildDefaultActions(DrawingController controller) {
     return _DrawingBoardState.buildDefaultActions(controller);
   }
-
   static Widget buildDefaultTools(DrawingController controller,
       {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
     return _DrawingBoardState.buildDefaultTools(controller,
         defaultToolsBuilder: defaultToolsBuilder, axis: axis);
   }
+
+
+  static Widget buildMediumActions(DrawingController controller) {
+    return _DrawingBoardState.buildMediumActions(controller);
+  }
+
+
+  static Widget buildMediumTools(DrawingController controller,
+      {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
+    return _DrawingBoardState.buildMediumTools(controller,
+        defaultToolsBuilder: defaultToolsBuilder, axis: axis);
+  }
+
+  static Widget buildHardActions(DrawingController controller) {
+    return _DrawingBoardState.buildHardActions(controller);
+  }
+
+  static Widget buildHardTools(DrawingController controller,
+      {DefaultToolsBuilder? defaultToolsBuilder, Axis axis = Axis.horizontal}) {
+    return _DrawingBoardState.buildHardTools(controller,
+        defaultToolsBuilder: defaultToolsBuilder, axis: axis);
+  }
+
 
   @override
   State<DrawingBoard> createState() => _DrawingBoardState();
@@ -163,17 +250,23 @@ class _DrawingBoardState extends State<DrawingBoard> {
       child: Align(alignment: widget.alignment, child: _buildBoard),
     );
 
-    if (widget.showDefaultActions || widget.showDefaultTools) {
+
       content = Column(
         children: <Widget>[
           Expanded(child: content),
-          if (widget.showDefaultActions) buildDefaultActions(_controller),
-          if (widget.showDefaultTools)
-            buildDefaultTools(_controller,
-                defaultToolsBuilder: widget.defaultToolsBuilder),
+          if (widget.difficultyOption == 0) buildDefaultActions(_controller),
+          if (widget.difficultyOption == 0) buildDefaultTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
+
+          if (widget.difficultyOption == 1) buildMediumActions(_controller),
+          if (widget.difficultyOption == 1) buildMediumTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder),
+
+
+          if (widget.difficultyOption == 2) buildHardActions(_controller),
+          if (widget.difficultyOption == 2) buildHardTools(_controller, defaultToolsBuilder: widget.defaultToolsBuilder)
+
         ],
       );
-    }
+
 
     return Listener(
       onPointerDown: (PointerDownEvent pde) =>
@@ -246,7 +339,66 @@ class _DrawingBoardState extends State<DrawingBoard> {
   }
 
 
-  static Widget buildDefaultActions(DrawingController controller) {
+  static Widget buildDefaultActions(
+
+      DrawingController controller) {
+    double _colorOpacity = 1;
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+          valueListenable: controller.drawConfig,
+          builder: (_, DrawConfig dc, ___) {
+            return Row(
+              children: <Widget>[
+                SizedBox(
+                  height: 24,
+                  width: 160,
+                  child: Slider(
+                    value: dc.strokeWidth,
+                    max: 50,
+                    min: 1,
+                    onChanged: (double v) =>
+                        controller.setStyle(strokeWidth: v),
+                  ),
+                ),
+                ColorPickerPopup(
+                  difficulty: 0,
+                  onColorSelected: (ui.Color selectedColor) {
+                    controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                  },
+                ),
+
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_turn_up_left,
+                    color: controller.canUndo() ? null : Colors.grey,
+                  ),
+                  onPressed: () => controller.undo(),
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_turn_up_right,
+                    color: controller.canRedo() ? null : Colors.grey,
+                  ),
+                  onPressed: () => controller.redo(),
+                ),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.trash),
+                  onPressed: () => controller.clear(),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  static Widget buildMediumActions(DrawingController controller) {
+    double _colorOpacity = 1;
     return Material(
       color: Colors.white,
       child: SingleChildScrollView(
@@ -267,6 +419,61 @@ class _DrawingBoardState extends State<DrawingBoard> {
                       onChanged: (double v) =>
                           controller.setStyle(strokeWidth: v),
                     ),
+                  ),
+                  ColorPickerPopup(
+                    difficulty: 1,
+                    onColorSelected: (ui.Color selectedColor) {
+                      controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      CupertinoIcons.arrow_turn_up_left,
+                      color: controller.canUndo() ? null : Colors.grey,
+                    ),
+                    onPressed: () => controller.undo(),
+                  ),
+
+
+                  IconButton(
+                    icon: const Icon(CupertinoIcons.trash),
+                    onPressed: () => controller.clear(),
+                  ),
+                ],
+              );
+            }),
+      ),
+    );
+  }
+
+  static Widget buildHardActions(DrawingController controller) {
+    double _colorOpacity = 1;
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+            valueListenable: controller.drawConfig,
+            builder: (_, DrawConfig dc, ___) {
+              return Row(
+                children: <Widget>[
+                  SizedBox(
+                    height: 24,
+                    width: 160,
+                    child: Slider(
+                      value: dc.strokeWidth,
+                      max: 50,
+                      min: 1,
+                      onChanged: (double v) =>
+                          controller.setStyle(strokeWidth: v),
+                    ),
+                  ),
+                  ColorPickerPopup(
+                    difficulty: 2,
+                    onColorSelected: (ui.Color selectedColor) {
+                      controller.setStyle(color: selectedColor.withOpacity(_colorOpacity));
+                    },
                   ),
                   IconButton(
                     icon: Icon(
@@ -293,7 +500,6 @@ class _DrawingBoardState extends State<DrawingBoard> {
       ),
     );
   }
-
 
   static Widget buildDefaultTools(
     DrawingController controller, {
@@ -323,10 +529,165 @@ class _DrawingBoardState extends State<DrawingBoard> {
                 : Column(children: children);
           },
         ),
+
       ),
     );
   }
+
+
+
+
+  static Widget buildMediumTools(
+      DrawingController controller, {
+        DefaultToolsBuilder? defaultToolsBuilder,
+        Axis axis = Axis.horizontal,
+      }) {
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: axis,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+          valueListenable: controller.drawConfig,
+          shouldRebuild: (DrawConfig p, DrawConfig n) =>
+          p.contentType != n.contentType,
+          builder: (_, DrawConfig dc, ___) {
+            final Type currType = dc.contentType;
+
+            final List<Widget> children =
+            (defaultToolsBuilder?.call(currType, controller) ??
+                DrawingBoard.mediumTools(currType, controller))
+                .map((DefToolItem item) => _DefToolItemWidget(item: item))
+                .toList();
+
+            return axis == Axis.horizontal
+                ? Row(children: children)
+                : Column(children: children);
+          },
+        ),
+
+      ),
+    );
+  }
+
+  static Widget buildHardTools(
+      DrawingController controller, {
+        DefaultToolsBuilder? defaultToolsBuilder,
+        Axis axis = Axis.horizontal,
+      }) {
+    return Material(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: axis,
+        padding: EdgeInsets.zero,
+        child: ExValueBuilder<DrawConfig>(
+          valueListenable: controller.drawConfig,
+          shouldRebuild: (DrawConfig p, DrawConfig n) =>
+          p.contentType != n.contentType,
+          builder: (_, DrawConfig dc, ___) {
+            final Type currType = dc.contentType;
+
+            final List<Widget> children =
+            (defaultToolsBuilder?.call(currType, controller) ??
+                DrawingBoard.hardTools(currType, controller))
+                .map((DefToolItem item) => _DefToolItemWidget(item: item))
+                .toList();
+
+            return axis == Axis.horizontal
+                ? Row(children: children)
+                : Column(children: children);
+          },
+        ),
+
+      ),
+    );
+  }
+
+
 }
+class ColorPickerPopup extends StatefulWidget {
+  final void Function(ui.Color color) onColorSelected;
+  final int difficulty;
+
+  const ColorPickerPopup({
+    Key? key,
+    required this.difficulty,
+    required this.onColorSelected,
+  }) : super(key: key);
+
+  @override
+  _ColorPickerPopupState createState() => _ColorPickerPopupState();
+}
+
+class _ColorPickerPopupState extends State<ColorPickerPopup> {
+  List<ui.Color> _getPalette() {
+    // Define color palettes for each difficulty
+    const List<ui.Color> fullPalette = [
+      Colors.red,
+      Colors.green,
+      Colors.blue,
+      Colors.orange,
+      Colors.grey,
+    ];
+
+    switch (widget.difficulty) {
+      case 1:
+        return [
+          Colors.red,
+          Colors.green,
+          Colors.blue,
+        ]; // Primary colors only
+      case 2:
+        return [
+          Colors.red,
+          Colors.blue,
+        ]; // Minimal colors
+      case 0:
+      default:
+        return fullPalette; // All colors
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ui.Color> customPalette = _getPalette();
+
+    return PopupMenuButton<Color>(
+      icon: const Icon(Icons.color_lens),
+      offset: const Offset(0, -50), // Adjust popup position
+      onSelected: (ui.Color value) {
+        widget.onColorSelected(value);
+      },
+      itemBuilder: (_) {
+        return [
+          PopupMenuItem<ui.Color>(
+            enabled: false, // Disable default item behavior
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+              child: Row(
+                children: customPalette.map((ui.Color color) {
+                  return GestureDetector(
+                    onTap: () {
+                      widget.onColorSelected(color);
+                      Navigator.of(context).pop(); // Close the popup menu
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      color: color,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ];
+      },
+    );
+  }
+}
+
 
 
 class DefToolItem {
