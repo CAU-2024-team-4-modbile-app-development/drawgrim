@@ -116,8 +116,11 @@ class _DrawingPageState extends State<DrawingPage>
     _timerController.forward();
 
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      _getImageData();
-      print("SEX");
+      if (mounted && context != null) {
+        _getImageData();
+      } else {
+        timer.cancel();
+      }
     });
     //upload image every 1 second
   }
@@ -164,8 +167,11 @@ class _DrawingPageState extends State<DrawingPage>
 
   @override
   void dispose() {
+    // 모든 컨트롤러와 타이머 안전하게 해제
     _timerController.dispose();
     _drawingController.dispose();
+    _timer?.cancel();
+    _timer = null;
     super.dispose();
   }
 
@@ -187,13 +193,13 @@ class _DrawingPageState extends State<DrawingPage>
 
     Map<dynamic, dynamic>? images = snapshot.value as Map?;
 
-    if (images != null && images.length > 10) {
+    if (images != null && images.length > 5) {
       // 오래된 데이터 삭제
       var sortedKeys = images.keys.toList()
         ..sort(
             (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
 
-      for (int i = 0; i < images.length - 10; i++) {
+      for (int i = 0; i < images.length - 5; i++) {
         await databaseRef.child(sortedKeys[i]).remove();
       }
     }
@@ -203,51 +209,53 @@ class _DrawingPageState extends State<DrawingPage>
 
   /// Capture the drawing data as image and upload
   Future<void> _getImageData() async {
-    final Uint8List? data =
-        (await _drawingController.getImageData())?.buffer.asUint8List();
-    if (data == null) {
-      debugPrint('Failed to get image data');
-      return;
+    try {
+      // null 체크와 함께 안전하게 이미지 데이터 가져오기
+      final imageData = await _drawingController.getImageData();
+      if (imageData != null) {
+        final Uint8List data = imageData.buffer.asUint8List();
+        await _uploadImage(data);
+      }
+    } catch (e) {
+      print('Error getting image data: $e');
     }
-    // Upload the image to Firebase
-    //await testUploadImage();
-
-    await _uploadImage(data);
   }
 
+// Add this method to your _DrawingPageState class
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
     return FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
         .collection('players')
-        .where('isViewer',
-        isEqualTo: true) // Only fetch players where isViewer is true
         .snapshots()
-        .map((snapshot) =>
-        snapshot.docs.map((doc) {
-          return {
-            'username': doc.data()['username'] ?? 'Unknown',
-            'score': doc.data()['score'] ?? 0,
-          };
-        }).toList());
+        .map((snapshot) => snapshot.docs.map((doc) {
+      return {
+        'username': doc.data()['username'] ?? 'Unknown',
+        'userId': doc.id,
+        'score': doc.data()['score'] ?? 0,
+      };
+    }).toList());
   }
+
+
 
   Stream<Map<String, dynamic>> getDrawerPlayerInfo() {
     return FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
         .collection('players')
-        .where('isDrawer', isEqualTo: true) // Fetch the single drawer player
+        .where('isDrawer', isEqualTo: true)
+        .limit(1) // Ensure only one drawer is fetched
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first; // Take the first (and only) document
+        final doc = snapshot.docs.first;
+        final data = doc.data();
         return {
-          'username': doc.data()['username'] ?? 'Unknown',
-          'score': doc.data()['score'] ?? 0,
+          'username': data['username'] ?? 'Unknown',
+          'score': data['score'] ?? 0,
         };
       }
-      // Return default values if no drawer is found
       return {
         'username': 'Unknown',
         'score': 0,
@@ -257,8 +265,8 @@ class _DrawingPageState extends State<DrawingPage>
 
   // Function to map score to difficulty
   int _mapScoreToDifficulty(int score) {
-    if (score < 100) return 0; // Easy
-    if (score < 200) return 1; // Medium
+    if (score < 30) return 0; // Easy
+    if (score < 70) return 1; // Medium
     return 2; // Hard
   }
 
@@ -286,7 +294,7 @@ class _DrawingPageState extends State<DrawingPage>
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey,
+      backgroundColor:Colors.blueAccent,
       body: Row(
         children: [
           // Drawing area
@@ -349,62 +357,13 @@ class _DrawingPageState extends State<DrawingPage>
                         );
                       },
                     ),
-                      /*
-                      child: StreamBuilder<Map<String, dynamic>>(
-                        stream: getDrawerPlayerInfo(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          }
 
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Center(
-                              child: Text(
-                                'unable to fetch drawer data',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            );
-                          }
-
-                          final player = snapshot.data!;
-
-                          return LayoutBuilder(
-                            builder: (BuildContext context,
-                                BoxConstraints constraints) {
-                              return DrawingBoard(
-                                boardPanEnabled: false,
-                                boardScaleEnabled: false,
-                                transformationController:
-                                _transformationController,
-                                controller: _drawingController,
-                                background: Container(
-                                  width: constraints.maxWidth,
-                                  height: constraints.maxHeight,
-                                  color: Colors.white,
-                                ),
-                                difficultyOption: 0,
-                              );
-                              // DRAWING BOARD
-                            },
-                          );
-                        },
-                      ),*/
                     ),
                   ],
                 ),
 
                 // Positioned 'Back' button at top-left
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      removePlayerFromGameRoom(widget.roomId);
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('Back'),
-                  ),
-                ),
+
               ],
             ),
           ),
@@ -413,70 +372,152 @@ class _DrawingPageState extends State<DrawingPage>
           Container(
             width: 200, // Adjust width as needed
             color: Colors.white,
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: getPlayerInfo(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
+            child: Stack(
+              children: [
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: getPlayerInfo(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No viewers yet',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  );
-                }
+                    final players = snapshot.data!;
+                    // Sort players by score in descending order
+                    final sortedPlayers = List<Map<String, dynamic>>.from(players)
+                      ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
-                final players = snapshot.data!;
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: sortedPlayers.map((player) {
+                            // Find the index in the sorted list to determine ranking
+                            int rank = sortedPlayers.indexOf(player) + 1;
 
-                return ListView.builder(
-                  itemCount: players.length,
-                  itemBuilder: (context, index) {
-                    final player = players[index];
-                    final username = player['username'];
-                    final score = player['score'] ?? 0;
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          // Emoji face
-                          Icon(
-                            Icons.face,
-                            size: 50,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 8),
-                          // Player info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  username,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Container(
+                                  width: 150,
+                                  padding: const EdgeInsets.all(12),
+                                  child: Stack(
+                                    children: [
+                                      // Ranking display
+                                      if (rank <= 3)
+                                        Positioned(
+                                          left: 0,
+                                          top: 0,
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: rank == 1
+                                                  ? Color(0xFFFFD700)
+                                                  : rank == 2
+                                                  ? Color(0xFFC0C0C0)
+                                                  : Colors.brown,
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(15),
+                                                bottomRight: Radius.circular(15),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '$rank등',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                      // Rest of the player card content remains the same
+                                      Column(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 30,
+                                            backgroundColor: Colors.blueAccent.withOpacity(0.7),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            player['username'],
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 20,
+                                              ),
+                                              SizedBox(width: 5),
+                                              Text(
+                                                '점수: ${player['score']}',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  'Score: $score',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     );
                   },
-                );
-              },
+                ),
+                Positioned(
+                  bottom: 20,
+                  right: 40,
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      removePlayerFromGameRoom(widget.roomId);
+                      Navigator.of(context).pop();
+                    },
+                    label:Text(
+                      "나가기",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    icon: Icon(Icons.exit_to_app,
+                      color: Colors.white,
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+
     );
   }
 }
