@@ -100,8 +100,17 @@ class OpenPage extends StatelessWidget {
                     ),
                   ),
                 ),
+                Container(
+                  width: 200,
+                  height: 200,
+
+                  child: Image.asset(
+                    'assets/puang.png',
+                  ),
+                ),
               ],
             ),
+
           ],
         ),
       ),
