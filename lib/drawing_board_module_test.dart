@@ -37,6 +37,74 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class ChatMessages extends StatelessWidget {
+  final String roomId;
+
+  const ChatMessages({Key? key, required this.roomId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('gameRooms')
+          .doc(roomId)
+          .collection('chats')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final chatDocs = snapshot.data!.docs;
+
+        return ListView.builder(
+          reverse: true,
+          itemCount: chatDocs.length,
+          itemBuilder: (context, index) {
+            final chatDoc = chatDocs[index].data() as Map<String, dynamic>?;
+
+            // Add null check
+            if (chatDoc == null) return SizedBox.shrink();
+
+            return Container(
+              margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: chatDoc['isCorrect'] == true
+                    ? Colors.green.withOpacity(0.2)
+                    : Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chatDoc['userId'] ?? 'Unknown User',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    chatDoc['text'] ?? 'No message',
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+
 class DrawingPage extends StatefulWidget {
   final String roomId;
 
@@ -52,7 +120,7 @@ class _DrawingPageState extends State<DrawingPage>
 
   late AnimationController _timerController;
   final TransformationController _transformationController =
-      TransformationController();
+  TransformationController();
   Color timeColor = Colors.green;
   final double first_timeWidth = 300.0;
   double timeWidth = 300.0;
@@ -63,9 +131,9 @@ class _DrawingPageState extends State<DrawingPage>
 
   Future<void> getAnswer_andUpdateElements() async {
     final roomRef =
-        FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
+    FirebaseFirestore.instance.collection('gameRooms').doc(widget.roomId);
     final QuerySnapshot subjectSnapshot =
-        await roomRef.collection('subject').get();
+    await roomRef.collection('subject').get();
 
     final DocumentSnapshot doc = subjectSnapshot.docs.first;
     List<dynamic> elements = doc['elements'];
@@ -92,7 +160,7 @@ class _DrawingPageState extends State<DrawingPage>
     getAnswer_andUpdateElements();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 20), // Set the desired countdown time
+      duration: Duration(seconds: 600), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
@@ -140,7 +208,7 @@ class _DrawingPageState extends State<DrawingPage>
         .collection('players');
 
     final QuerySnapshot querySnapshot =
-        await playersRef.orderBy(FieldPath.documentId).get();
+    await playersRef.orderBy(FieldPath.documentId).get();
 
     print("CURRENTUSER: ${currentUser?.email}");
 
@@ -199,7 +267,7 @@ class _DrawingPageState extends State<DrawingPage>
       // 오래된 데이터 삭제
       var sortedKeys = images.keys.toList()
         ..sort(
-            (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
+                (a, b) => images[a]['timestamp'].compareTo(images[b]['timestamp']));
 
       for (int i = 0; i < images.length - 3; i++) {
         await databaseRef.child(sortedKeys[i]).remove();
@@ -277,7 +345,7 @@ class _DrawingPageState extends State<DrawingPage>
 
     try {
       final roomRef =
-          FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
+      FirebaseFirestore.instance.collection('gameRooms').doc(roomId);
 
       await roomRef.update({
         'players': FieldValue.arrayRemove([_authentication.currentUser?.email]),
@@ -330,6 +398,7 @@ class _DrawingPageState extends State<DrawingPage>
       backgroundColor:Colors.blueAccent,
       body: Row(
         children: [
+
           // Drawing area
           Expanded(
             child: Stack(
@@ -360,36 +429,36 @@ class _DrawingPageState extends State<DrawingPage>
                     ),
                     SizedBox(height: 10),
                     Expanded(
-                    child: StreamBuilder<Map<String, dynamic>>(
-                     stream: getDrawerPlayerInfo(),
-                     builder: (context, snapshot) {
-                       // Default difficulty to 0 if no data is available
-                        int difficultyOption = 0;
+                      child: StreamBuilder<Map<String, dynamic>>(
+                        stream: getDrawerPlayerInfo(),
+                        builder: (context, snapshot) {
+                          // Default difficulty to 0 if no data is available
+                          int difficultyOption = 0;
 
-                       if (snapshot.hasData && snapshot.data != null) {
-                          final score = snapshot.data!['score'] ?? 0;
-                         difficultyOption = _mapScoreToDifficulty(score);
-                        }
+                          if (snapshot.hasData && snapshot.data != null) {
+                            final score = snapshot.data!['score'] ?? 0;
+                            difficultyOption = _mapScoreToDifficulty(score);
+                          }
 
-                       return LayoutBuilder(
-                          builder: (BuildContext context,
-                             BoxConstraints constraints) {
-                           return DrawingBoard(
-                             boardPanEnabled: false,
-                             boardScaleEnabled: false,
-                             transformationController: _transformationController,
-                             controller: _drawingController,
-                             background: Container(
-                               width: constraints.maxWidth,
-                                height: constraints.maxHeight,
-                                color: Colors.white,
-                              ),
-                              difficultyOption: difficultyOption,
-                            );
-                          },
-                        );
-                      },
-                    ),
+                          return LayoutBuilder(
+                            builder: (BuildContext context,
+                                BoxConstraints constraints) {
+                              return DrawingBoard(
+                                boardPanEnabled: false,
+                                boardScaleEnabled: false,
+                                transformationController: _transformationController,
+                                controller: _drawingController,
+                                background: Container(
+                                  width: constraints.maxWidth,
+                                  height: constraints.maxHeight,
+                                  color: Colors.white,
+                                ),
+                                difficultyOption: difficultyOption,
+                              );
+                            },
+                          );
+                        },
+                      ),
 
                     ),
                   ],
@@ -402,176 +471,202 @@ class _DrawingPageState extends State<DrawingPage>
           ),
 
           // Player information column
-          Container(
-            width: 200, // Adjust width as needed
-            color: Colors.white,
-            child: Stack(
-              children: [
-                StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: getPlayerInfo(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
-                    }
+          Column(
+            children: [
+              // Chat Messages Section
+              Container(
+                width: 180,
+                height: 70,
+                margin: EdgeInsets.only(bottom: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    )
+                  ],
+                ),
+                child: ChatMessages(roomId: widget.roomId),
+              ),
 
-                    final players = snapshot.data!;
-                    // Sort players by score in descending order
-                    final sortedPlayers = List<Map<String, dynamic>>.from(players)
-                      ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+              // Players Section
+              Container(
+                width: 180,
+                height: 500,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    )
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: getPlayerInfo(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(child: CircularProgressIndicator());
+                        }
 
-                    bool isAnyPlayerScoreAboveThreshold = sortedPlayers
-                        .any((player) => (player['score'] as int) >= 100);
+                        final players = snapshot.data!;
+                        final sortedPlayers = List<Map<String, dynamic>>.from(players)
+                          ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
-                    if (isAnyPlayerScoreAboveThreshold) {
-                      navigateToRankingPage();
-                    }
+                        bool isAnyPlayerScoreAboveThreshold = sortedPlayers
+                            .any((player) => (player['score'] as int) >= 100);
 
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: sortedPlayers.map((player) {
-                            // Find the index in the sorted list to determine ranking
-                            int rank = sortedPlayers.indexOf(player) + 1;
+                        if (isAnyPlayerScoreAboveThreshold) {
+                          navigateToRankingPage();
+                        }
 
-                            // If the player is the current user, show "나" instead of their username
-                            String displayName = player['userId'] == FirebaseAuth.instance.currentUser?.email ? "나" : player['username'];
-                            String difficulty = getDifficultyLevel(player['score']);
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+                          child: ListView(
+                            children: sortedPlayers.map((player) {
+                              int rank = sortedPlayers.indexOf(player) + 1;
+                              String displayName = player['userId'] == FirebaseAuth.instance.currentUser?.email ? "나" : player['username'];
+                              String difficulty = getDifficultyLevel(player['score']);
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Card(
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Container(
-                                  width: 150,
-                                  padding: const EdgeInsets.all(12),
-                                  child: Stack(
-                                    children: [
-                                      // Ranking display
-                                      if (rank <= 3)
-                                        Positioned(
-                                          left: 0,
-                                          top: 0,
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: rank == 1
-                                                  ? Color(0xFFFFD700)
-                                                  : rank == 2
-                                                  ? Color(0xFFC0C0C0)
-                                                  : Colors.brown,
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(15),
-                                                bottomRight: Radius.circular(15),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              '$rank등',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-
-                                      // Rest of the player card content remains the same
-                                      Column(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 30,
-                                            backgroundColor: Colors.blueAccent.withOpacity(0.7),
-                                            child: Icon(
-                                              Icons.person,
-                                              size: 50,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            displayName,  // Display "나" for the current user
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blueAccent,
-                                            ),
-                                          ),
-                                          SizedBox(height: 5),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 20,
-                                              ),
-                                              SizedBox(width: 5),
-                                              Text(
-                                                '점수: ${player['score']}',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500,
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Stack(
+                                      children: [
+                                        // Ranking display
+                                        if (rank <= 3)
+                                          Positioned(
+                                            left: 0,
+                                            top: 0,
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: rank == 1
+                                                    ? Color(0xFFFFD700)
+                                                    : rank == 2
+                                                    ? Color(0xFFC0C0C0)
+                                                    : Colors.brown,
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(15),
+                                                  bottomRight: Radius.circular(15),
                                                 ),
                                               ),
-                                              SizedBox(height: 10),
-                                              // Display difficulty level based on score
-
-                                            ],
-                                          ),
-                                          Text(
-                                            '난이도: $difficulty',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.red,
+                                              child: Text(
+                                                '$rank등',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ],
 
-                                      ),
-                                    ],
+                                        // Player card content
+                                        Column(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 30,
+                                              backgroundColor: Colors.blueAccent.withOpacity(0.7),
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              displayName,
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blueAccent,
+                                              ),
+                                            ),
+                                            SizedBox(height: 5),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                  size: 20,
+                                                ),
+                                                SizedBox(width: 5),
+                                                Text(
+                                                  '점수: ${player['score']}',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Text(
+                                              '난이도: $difficulty',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Exit Button
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      left: 10,
+                      child: Center(
+                        child: FloatingActionButton.extended(
+                          onPressed: () {
+                            removePlayerFromGameRoom(widget.roomId);
+                            Navigator.of(context).pop();
+                          },
+                          label: Text(
+                            "나가기",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          icon: Icon(
+                            Icons.exit_to_app,
+                            color: Colors.white,
+                          ),
+                          backgroundColor: Colors.red,
                         ),
                       ),
-                    );
-                  },
-                ),
-
-                Positioned(
-                  bottom: 20,
-                  right: 40,
-                  child: FloatingActionButton.extended(
-                    onPressed: () {
-                      removePlayerFromGameRoom(widget.roomId);
-                      Navigator.of(context).pop();
-                    },
-                    label:Text(
-                      "나가기",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
                     ),
-
-                    icon: Icon(Icons.exit_to_app,
-                      color: Colors.white,
-                    ),
-                    backgroundColor: Colors.red,
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            ],
+          )
         ],
       ),
 
