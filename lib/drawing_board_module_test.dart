@@ -39,19 +39,24 @@ class MyApp extends StatelessWidget {
 
 class ChatMessages extends StatelessWidget {
   final String roomId;
+  final Stream<QuerySnapshot> _chatStream;
 
-  const ChatMessages({Key? key, required this.roomId}) : super(key: key);
+  ChatMessages({Key? key, required this.roomId})
+      : _chatStream = FirebaseFirestore.instance
+      .collection('gameRooms')
+      .doc(roomId)
+      .collection('chats')
+      .orderBy('createdAt', descending: true)
+      .limit(1)
+      .snapshots()
+      .asBroadcastStream(), // Ensures multiple listeners can use the same stream.
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('gameRooms')
-          .doc(roomId)
-          .collection('chats')
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .snapshots(),
+      stream: _chatStream,
+
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
@@ -292,11 +297,13 @@ class _DrawingPageState extends State<DrawingPage>
   }
 
 // Add this method to your _DrawingPageState class
+  /*
   Stream<List<Map<String, dynamic>>> getPlayerInfo() {
     return FirebaseFirestore.instance
         .collection('gameRooms')
         .doc(widget.roomId)
         .collection('players')
+        .limit(5)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
       return {
@@ -305,8 +312,28 @@ class _DrawingPageState extends State<DrawingPage>
         'score': doc.data()['score'] ?? 0,
       };
     }).toList());
-  }
+  }*/
 
+  late final Stream<List<Map<String, dynamic>>> _playerInfoStream = _createPlayerInfoStream();
+
+  Stream<List<Map<String, dynamic>>> getPlayerInfo() => _playerInfoStream;
+
+  Stream<List<Map<String, dynamic>>> _createPlayerInfoStream() {
+    return FirebaseFirestore.instance
+        .collection('gameRooms')
+        .doc(widget.roomId)
+        .collection('players')
+        .limit(5)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      return {
+        'username': doc.data()['username'] ?? 'Unknown',
+        'userId': doc.id,
+        'score': doc.data()['score'] ?? 0,
+      };
+    }).toList())
+        .asBroadcastStream(); // Allows multiple listeners to share the same stream instance.
+  }
 
 
   Stream<Map<String, dynamic>> getDrawerPlayerInfo() {
@@ -512,6 +539,7 @@ class _DrawingPageState extends State<DrawingPage>
                     StreamBuilder<List<Map<String, dynamic>>>(
                       stream: getPlayerInfo(),
                       builder: (context, snapshot) {
+
                         if (!snapshot.hasData) {
                           return Center(child: CircularProgressIndicator());
                         }

@@ -213,88 +213,90 @@ class _GameRoomState extends State<GameRoom> {
                 ),
                 Expanded(
                   flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 190,
-                          height: 190,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 10,
-                                offset: Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              'assets/background.png',
-                              fit: BoxFit.cover,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 190,
+                            height: 190,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.symmetric(vertical: 20.0),
-                          child: TextField(
-                            controller: _roomNameController,
-                            decoration: const InputDecoration(
-                              labelText: '방 이름 입력',
-                              border: OutlineInputBorder(),
-                            ),
-                            style: TextStyle(
-                              fontSize: 25.0, // 폰트 크기 설정
-                              fontWeight: FontWeight.bold, // 굵게 설정
-                              color: Colors.black, // 폰트 색상
-                            ),
-
-                            onChanged: (value) {
-                              setState(() {
-                                roomName = value;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Row(
-                          children: [
-                            Container(
-                              width: 90,
-                              height: 90,
-
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
                               child: Image.asset(
-                                'assets/푸앙_윙크.png',
+                                'assets/background.png',
+                                fit: BoxFit.cover,
                               ),
                             ),
-                            ElevatedButton(
-                              onPressed: createRoom,
-                              child: const Text(
-                                "방만들기",
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                          ),
+                          Container(
+                            margin: EdgeInsets.symmetric(vertical: 20.0),
+                            child: TextField(
+                              controller: _roomNameController,
+                              decoration: const InputDecoration(
+                                labelText: '방 이름 입력',
+                                border: OutlineInputBorder(),
+                              ),
+                              style: TextStyle(
+                                fontSize: 25.0, // 폰트 크기 설정
+                                fontWeight: FontWeight.bold, // 굵게 설정
+                                color: Colors.black, // 폰트 색상
+                              ),
+
+                              onChanged: (value) {
+                                setState(() {
+                                  roomName = value;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Container(
+                                width: 90,
+                                height: 90,
+
+                                child: Image.asset(
+                                  'assets/푸앙_윙크.png',
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
-                                shadowColor: Colors.transparent,
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ElevatedButton(
+                                onPressed: createRoom,
+                                child: const Text(
+                                  "방만들기",
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blueAccent,
+                                  shadowColor: Colors.transparent,
+                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                ),
                               ),
-                            ),
 
-                          ],
-                        ),
+                            ],
+                          ),
 
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  )
                 ),
               ],
             ),
