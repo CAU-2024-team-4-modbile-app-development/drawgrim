@@ -476,21 +476,6 @@ class _DrawingBoardState extends State<DrawingBoard> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(
-                      CupertinoIcons.arrow_turn_up_left,
-                      color: controller.canUndo() ? null : Colors.grey,
-                    ),
-                    onPressed: () => controller.undo(),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      CupertinoIcons.arrow_turn_up_right,
-                      color: controller.canRedo() ? null : Colors.grey,
-                    ),
-                    onPressed: () => controller.redo(),
-                  ),
-
-                  IconButton(
                     icon: const Icon(CupertinoIcons.trash),
                     onPressed: () => controller.clear(),
                   ),

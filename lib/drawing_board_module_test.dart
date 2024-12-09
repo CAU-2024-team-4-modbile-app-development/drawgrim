@@ -127,8 +127,8 @@ class _DrawingPageState extends State<DrawingPage>
   final TransformationController _transformationController =
   TransformationController();
   Color timeColor = Colors.green;
-  final double first_timeWidth = 300.0;
-  double timeWidth = 300.0;
+  final double first_timeWidth = 30.0;
+  double timeWidth = 30.0;
   bool isTimeLow = false;
 
   double _colorOpacity = 1;
@@ -165,14 +165,14 @@ class _DrawingPageState extends State<DrawingPage>
     getAnswer_andUpdateElements();
     _timerController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 600), // Set the desired countdown time
+      duration: Duration(seconds: 30), // Set the desired countdown time
     )
       ..addListener(() {
         setState(() {
           // Update time bar color and width based on remaining time
           double progress = _timerController.value;
           timeColor = Color.lerp(Colors.green, Colors.red, progress)!;
-          timeWidth = 300 * (1 - progress);
+          timeWidth = 30 * (1 - progress);
 
           // Trigger shake effect when time is low
           if (progress > 0.8) {
