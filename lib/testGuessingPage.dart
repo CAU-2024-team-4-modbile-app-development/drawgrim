@@ -428,25 +428,25 @@ class _NewMessageState extends State<NewMessage> {
         SizedBox(
           width: MediaQuery.of(context).size.width * 0.3,
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: TextField(
-              controller: _controler,
-              decoration: InputDecoration(
-                labelStyle: TextStyle(color: Colors.black),
-                filled: true,
-                fillColor: Colors.blueAccent.withOpacity(0.2), // Set the background color
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12), // Round corners
-                  borderSide: BorderSide.none, // Remove border line
+              padding: const EdgeInsets.all(10.0),
+              child: TextField(
+                controller: _controler,
+                decoration: InputDecoration(
+                  labelStyle: TextStyle(color: Colors.black),
+                  filled: true,
+                  fillColor: Colors.blueAccent.withOpacity(0.2),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-              ),
-              style: TextStyle(color: Colors.black), // Text color
-              onChanged: (value) {
-                setState(() {
-                  newMessage = value;
-                });
-              },
-            )
+                style: TextStyle(color: Colors.black),
+                onChanged: (value) {
+                  setState(() {
+                    newMessage = value;
+                  });
+                },
+              )
           ),
         ),
         IconButton(
@@ -459,6 +459,7 @@ class _NewMessageState extends State<NewMessage> {
                 .doc(widget.roomId);
             final QuerySnapshot subjectSnapshot =
             await roomRef.collection('subject').get();
+            final currentUser = FirebaseAuth.instance.currentUser;
 
             final DocumentSnapshot doc = subjectSnapshot.docs.first;
             String answer = doc['answer'];
@@ -466,11 +467,19 @@ class _NewMessageState extends State<NewMessage> {
             if (newMessage.trim() == answer) {
               _showPopup('정답입니다!', true);
 
-              final currentUser = FirebaseAuth.instance.currentUser;
               if (currentUser != null) {
                 final playerRef = roomRef
                     .collection('players')
                     .doc(currentUser?.email);
+
+                // 채팅 메시지 Firestore에 저장
+                await roomRef.collection('chats').add({
+                  'text': newMessage,
+                  'createdAt': Timestamp.now(),
+                  'userId': currentUser?.email,
+                  'username': currentUser?.displayName ?? '익명',
+                  'isCorrect': true,
+                });
 
                 await FirebaseFirestore.instance
                     .runTransaction((transaction) async {
@@ -487,6 +496,15 @@ class _NewMessageState extends State<NewMessage> {
               }
             } else {
               _showPopup('오답입니다!', false);
+
+              // 오답 메시지도 저장
+              await roomRef.collection('chats').add({
+                'text': newMessage,
+                'createdAt': Timestamp.now(),
+                'userId': currentUser?.email,
+                'username': currentUser?.displayName ?? '익명',
+                'isCorrect': false,
+              });
             }
 
             _controler.clear();
