@@ -9,6 +9,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'drawing_board_module_test.dart';
 import 'Ranking.dart';
 
+import 'package:audioplayers/audioplayers.dart';
+
+AudioPlayer _audioPlayer = AudioPlayer();
+
+
+
 class ViewerPage extends StatefulWidget {
   final String roomId;
 
@@ -199,7 +205,7 @@ class _ViewerPageState extends State<ViewerPage> {
                                   imageData,
                                   key: ValueKey<String>(lastEntry.key),
                                 ),
-                              );
+                           );
                             },
                           ),
                         ),
@@ -421,6 +427,8 @@ class _NewMessageState extends State<NewMessage> {
     );
   }
 
+  bool flag = false;
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -464,7 +472,12 @@ class _NewMessageState extends State<NewMessage> {
             final DocumentSnapshot doc = subjectSnapshot.docs.first;
             String answer = doc['answer'];
 
-            if (newMessage.trim() == answer) {
+            if (newMessage.trim() == answer && flag == false) {
+              setState(() {
+                flag = true;
+              });
+              await _audioPlayer.play(AssetSource("effect_coorect.mp3"));
+              await Future.delayed(Duration(seconds: 2));
               _showPopup('정답입니다!', true);
 
               if (currentUser != null) {
@@ -495,7 +508,13 @@ class _NewMessageState extends State<NewMessage> {
                 });
               }
             } else {
-              _showPopup('오답입니다!', false);
+
+
+              if(flag == true){
+                _showPopup('이미 정답을 맞추셨습니다!', false);
+              }else{
+                _showPopup('오답입니다!', false);
+              }
 
               // 오답 메시지도 저장
               await roomRef.collection('chats').add({
